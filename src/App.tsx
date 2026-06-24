@@ -15,7 +15,14 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { OptionContent, QuestionStage, VisualRow } from './components/QuestionViews'
 import {
   ageTracks,
@@ -43,6 +50,19 @@ type ScreenMode = 'home' | 'parent' | 'admin'
 type SessionAnswer = {
   questionId: string
   optionId: string
+}
+type GestureTemplate = 'drag' | 'connect'
+type ActiveOptionGesture = {
+  optionId: string
+  template: GestureTemplate
+  startX: number
+  startY: number
+  anchorX: number
+  anchorY: number
+  x: number
+  y: number
+  overTarget: boolean
+  hasMoved: boolean
 }
 
 const progressStorageKey = 'kids-thinking-play-progress'
@@ -229,8 +249,12 @@ function App() {
   const [importedQuestions, setImportedQuestions] = useState<Question[]>(() => readJson(importedStorageKey, []))
   const [importText, setImportText] = useState('')
   const [importMessage, setImportMessage] = useState('还没有导入内容。')
+  const [activeGesture, setActiveGestureState] = useState<ActiveOptionGesture | null>(null)
   const finishRecordedRef = useRef(false)
   const sessionStartedAtRef = useRef<number | null>(null)
+  const activeGestureRef = useRef<ActiveOptionGesture | null>(null)
+  const gesturePointerIdRef = useRef<number | null>(null)
+  const suppressOptionClickRef = useRef(false)
 
   const questionPool = useMemo(() => [...generatedQuestions, ...importedQuestions], [importedQuestions])
   const currentTrack = ageTracks.find((track) => track.key === selectedAge) ?? null
@@ -305,6 +329,92 @@ function App() {
     if (correct) {
       setAnswers((existing) => [...existing, { questionId: currentQuestion.id, optionId }])
     }
+  }
+
+  function setActiveGesture(nextGesture: ActiveOptionGesture | null) {
+    activeGestureRef.current = nextGesture
+    setActiveGestureState(nextGesture)
+  }
+
+  function isGestureTemplate(template: TemplateKind): template is GestureTemplate {
+    return template === 'drag' || template === 'connect'
+  }
+
+  function isOverGestureTarget(template: GestureTemplate, x: number, y: number) {
+    const targetSelector = template === 'drag' ? '.drop-zone' : '.connect-target'
+    return Boolean(document.elementFromPoint(x, y)?.closest(targetSelector))
+  }
+
+  function beginOptionGesture(event: ReactPointerEvent<HTMLButtonElement>, optionId: string) {
+    if (!currentQuestion || pickedOption || !isGestureTemplate(currentQuestion.template)) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const nextGesture: ActiveOptionGesture = {
+      optionId,
+      template: currentQuestion.template,
+      startX: event.clientX,
+      startY: event.clientY,
+      anchorX: rect.left + rect.width / 2,
+      anchorY: rect.top + rect.height / 2,
+      x: event.clientX,
+      y: event.clientY,
+      overTarget: isOverGestureTarget(currentQuestion.template, event.clientX, event.clientY),
+      hasMoved: false,
+    }
+    gesturePointerIdRef.current = event.pointerId
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setActiveGesture(nextGesture)
+  }
+
+  function moveOptionGesture(event: ReactPointerEvent<HTMLButtonElement>) {
+    const currentGesture = activeGestureRef.current
+    if (!currentGesture || gesturePointerIdRef.current !== event.pointerId) return
+
+    const hasMoved =
+      currentGesture.hasMoved ||
+      Math.hypot(event.clientX - currentGesture.startX, event.clientY - currentGesture.startY) > 7
+    const nextGesture = {
+      ...currentGesture,
+      x: event.clientX,
+      y: event.clientY,
+      overTarget: isOverGestureTarget(currentGesture.template, event.clientX, event.clientY),
+      hasMoved,
+    }
+    if (hasMoved) event.preventDefault()
+    setActiveGesture(nextGesture)
+  }
+
+  function endOptionGesture(event: ReactPointerEvent<HTMLButtonElement>) {
+    const currentGesture = activeGestureRef.current
+    if (!currentGesture || gesturePointerIdRef.current !== event.pointerId) return
+
+    const overTarget = isOverGestureTarget(currentGesture.template, event.clientX, event.clientY)
+    if (currentGesture.hasMoved || overTarget) suppressOptionClickRef.current = true
+    if (overTarget) chooseOption(currentGesture.optionId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    gesturePointerIdRef.current = null
+    setActiveGesture(null)
+  }
+
+  function cancelOptionGesture(event: ReactPointerEvent<HTMLButtonElement>) {
+    const currentGesture = activeGestureRef.current
+    if (!currentGesture || gesturePointerIdRef.current !== event.pointerId) return
+    if (currentGesture.hasMoved) suppressOptionClickRef.current = true
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    gesturePointerIdRef.current = null
+    setActiveGesture(null)
+  }
+
+  function handleOptionClick(event: ReactMouseEvent<HTMLButtonElement>, optionId: string) {
+    if (suppressOptionClickRef.current) {
+      suppressOptionClickRef.current = false
+      event.preventDefault()
+      return
+    }
+    chooseOption(optionId)
   }
 
   function finishTrack() {
@@ -686,6 +796,9 @@ function App() {
 
   const answeredCorrectly = pickedOption === currentQuestion.answerId
   const progressPercent = ((questionIndex + 1) / trackQuestions.length) * 100
+  const activeGestureOption = activeGesture
+    ? currentQuestion.options.find((option) => option.id === activeGesture.optionId)
+    : null
 
   return (
     <main className="app-shell quiz-screen">
@@ -721,6 +834,11 @@ function App() {
             disabled={Boolean(pickedOption)}
             pickedOption={pickedOption}
             onAnswer={chooseOption}
+            stageGesture={
+              activeGesture
+                ? { template: activeGesture.template, overTarget: activeGesture.overTarget }
+                : null
+            }
           />
         </div>
       </section>
@@ -730,6 +848,7 @@ function App() {
           const isPicked = pickedOption === option.id
           const isCorrect = option.id === currentQuestion.answerId
           const pickedCorrectly = pickedOption === currentQuestion.answerId
+          const isGestureSource = activeGesture?.optionId === option.id
           const stateClass = pickedOption
             ? pickedCorrectly
               ? isCorrect
@@ -742,19 +861,58 @@ function App() {
 
           return (
             <button
-              className={`option-button template-${currentQuestion.template} ${stateClass}`}
+              className={[
+                'option-button',
+                `template-${currentQuestion.template}`,
+                stateClass,
+                isGestureSource ? 'is-gesture-source' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               disabled={Boolean(pickedOption)}
-              draggable={currentQuestion.template === 'drag' && !pickedOption}
+              draggable={false}
               key={option.id}
               type="button"
-              onClick={() => chooseOption(option.id)}
-              onDragStart={(event) => event.dataTransfer.setData('text/plain', option.id)}
+              onClick={(event) => handleOptionClick(event, option.id)}
+              onDragStart={(event) => event.preventDefault()}
+              onPointerCancel={cancelOptionGesture}
+              onPointerDown={(event) => beginOptionGesture(event, option.id)}
+              onPointerMove={moveOptionGesture}
+              onPointerUp={endOptionGesture}
             >
               <OptionContent option={option} />
             </button>
           )
         })}
       </section>
+
+      {activeGesture && activeGestureOption && (
+        <>
+          {activeGesture.template === 'connect' && (
+            <svg className="gesture-thread" aria-hidden="true">
+              <line
+                x1={activeGesture.anchorX}
+                y1={activeGesture.anchorY}
+                x2={activeGesture.x}
+                y2={activeGesture.y}
+              />
+            </svg>
+          )}
+          <div
+            aria-hidden="true"
+            className={[
+              'gesture-ghost',
+              `template-${activeGesture.template}`,
+              activeGesture.overTarget ? 'is-over-target' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            style={{ left: activeGesture.x, top: activeGesture.y }}
+          >
+            <OptionContent option={activeGestureOption} />
+          </div>
+        </>
+      )}
 
       {pickedOption && (
         <section className={answeredCorrectly ? 'feedback correct' : 'feedback wrong'} aria-live="polite">

@@ -788,6 +788,8 @@
     transform 150ms ease,
     box-shadow 150ms ease,
     background 150ms ease;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .option-button:hover:not(:disabled) {
@@ -817,11 +819,97 @@
   opacity: 0.48;
 }
 
+.option-button.is-gesture-source {
+  transform: translateY(5px) scale(0.96);
+  background: var(--sun-soft);
+  box-shadow: 0 3px 0 var(--ink-soft);
+  opacity: 0.62;
+}
+
 .option-text {
   color: var(--text-strong);
   font-size: 21px;
   font-weight: 950;
   line-height: 1.2;
+}
+
+.gesture-thread {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  width: 100vw;
+  height: 100svh;
+  pointer-events: none;
+}
+
+.gesture-thread line {
+  stroke: var(--leaf);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 16 12;
+  filter: drop-shadow(0 4px 0 var(--ink-soft));
+  animation: threadDash 520ms linear infinite;
+}
+
+.gesture-ghost {
+  position: fixed;
+  z-index: 7;
+  min-width: 126px;
+  max-width: min(180px, 42vw);
+  min-height: 90px;
+  padding: 12px;
+  border: 4px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 10px 0 var(--ink-soft);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0.96;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  animation: ghostFloat 220ms ease-out both;
+}
+
+.gesture-ghost.is-over-target {
+  background: var(--mint);
+  transform: translate(-50%, -50%) rotate(1deg) scale(1.08);
+}
+
+.gesture-ghost .visual-row {
+  gap: 8px;
+}
+
+.gesture-ghost .shape-tile {
+  width: 56px;
+  height: 56px;
+  border-width: 3px;
+  font-size: 20px;
+  box-shadow: 0 5px 0 var(--ink-soft), inset 0 -5px 0 rgba(0, 0, 0, 0.12);
+}
+
+.gesture-ghost .shape-triangle {
+  width: 0;
+  height: 0;
+  border-right-width: 34px;
+  border-bottom-width: 58px;
+  border-left-width: 34px;
+  box-shadow: none;
+}
+
+.gesture-ghost .shape-diamond {
+  width: 48px;
+  height: 48px;
+}
+
+.gesture-ghost .shape-pill {
+  min-width: 72px;
+  padding: 0 18px;
+}
+
+.gesture-ghost .option-text {
+  font-size: 18px;
 }
 
 .feedback {
@@ -1216,11 +1304,54 @@
 }
 
 .drop-zone {
+  position: relative;
+  overflow: hidden;
   border: 4px dashed var(--ink);
   border-radius: 8px;
   background: var(--sun-soft);
   flex-direction: column;
   gap: 16px;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+  touch-action: none;
+}
+
+.drop-zone::after {
+  position: absolute;
+  inset: 14px;
+  border: 3px solid rgba(51, 40, 32, 0.14);
+  border-radius: 8px;
+  content: '';
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.drop-zone.is-gesture-active {
+  border-style: solid;
+  background: var(--sky-soft);
+  transform: scale(0.99);
+}
+
+.drop-zone.is-gesture-active::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.drop-zone.is-over-target {
+  background: var(--mint);
+  box-shadow: inset 0 0 0 8px rgba(46, 139, 87, 0.16);
+  transform: scale(1.03);
+  animation: targetBounce 520ms ease-in-out infinite alternate;
+}
+
+.drop-zone.is-over-target .drop-label {
+  background: var(--sun);
 }
 
 .drop-label {
@@ -1232,15 +1363,19 @@
   font-weight: 950;
 }
 
-.option-button.template-drag {
+.option-button.template-drag,
+.option-button.template-connect {
   cursor: grab;
+  touch-action: none;
 }
 
-.option-button.template-drag:active {
+.option-button.template-drag:active,
+.option-button.template-connect:active {
   cursor: grabbing;
 }
 
 .connect-board {
+  position: relative;
   gap: 18px;
 }
 
@@ -1254,6 +1389,11 @@
   display: grid;
   place-items: center;
   gap: 10px;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
 }
 
 .connect-node span {
@@ -1267,13 +1407,46 @@
   border-radius: 999px;
   background: var(--line);
   transform: scaleX(0.5);
+  transform-origin: center;
   opacity: 0.45;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease,
+    background 160ms ease;
 }
 
 .connect-line.is-visible {
   background: var(--leaf);
   opacity: 1;
   transform: scaleX(1);
+}
+
+.connect-line.is-preview {
+  background: var(--sun);
+  opacity: 0.9;
+  transform: scaleX(0.84);
+  animation: linePulse 620ms ease-in-out infinite alternate;
+}
+
+.connect-board.is-gesture-active .connect-node:first-child {
+  transform: translateY(-3px);
+}
+
+.connect-target {
+  touch-action: none;
+}
+
+.connect-target.is-gesture-active {
+  border-style: dashed;
+  background: var(--sun-soft);
+}
+
+.connect-target.is-over-target {
+  border-style: solid;
+  background: var(--mint);
+  box-shadow: inset 0 0 0 8px rgba(46, 139, 87, 0.16);
+  transform: scale(1.04);
+  animation: targetBounce 520ms ease-in-out infinite alternate;
 }
 
 .connect-placeholder {
@@ -1314,22 +1487,88 @@
 .maze-board {
   width: min(100%, 320px);
   aspect-ratio: 1;
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--maze-size), 1fr);
   gap: 8px;
+  touch-action: none;
+  user-select: none;
 }
 
 .maze-cell {
   position: relative;
+  overflow: hidden;
   border: 3px solid var(--ink);
   border-radius: 8px;
   background: var(--paper);
+  cursor: pointer;
   display: grid;
   place-items: center;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
 }
 
-.maze-cell.is-path {
+.maze-cell::before {
+  position: absolute;
+  width: 38%;
+  height: 38%;
+  border-radius: 999px;
+  background: rgba(46, 139, 87, 0.22);
+  content: '';
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.maze-cell.is-path,
+.maze-cell.is-road {
+  background: var(--sky-soft);
+}
+
+.maze-cell.is-path::before,
+.maze-cell.is-road::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.maze-cell.is-start {
+  background: var(--sun-soft);
+}
+
+.maze-cell.is-exit {
+  background: var(--coral-soft);
+}
+
+.maze-cell.is-traced {
+  z-index: 1;
   background: var(--mint);
+  box-shadow: 0 6px 0 var(--ink-soft);
+  transform: scale(1.06);
+  animation: tracePop 180ms ease-out both;
+}
+
+.maze-cell.is-traced::before {
+  background: var(--leaf);
+  opacity: 0.85;
+  transform: scale(1.12);
+}
+
+.maze-cell.is-picked-exit {
+  background: var(--mint);
+  box-shadow: 0 6px 0 var(--ink-soft);
+  transform: scale(1.08);
+}
+
+.maze-board.is-tracing .maze-cell.is-road:not(.is-traced) {
+  filter: saturate(1.2);
+}
+
+.maze-board.is-miss {
+  animation: mazeShake 360ms ease;
 }
 
 .maze-cell strong,
@@ -1360,14 +1599,88 @@
   }
 }
 
+@keyframes targetBounce {
+  from {
+    transform: scale(1.01);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ghostFloat {
+  from {
+    opacity: 0.65;
+    transform: translate(-50%, -44%) scale(0.92) rotate(-5deg);
+  }
+
+  to {
+    opacity: 0.96;
+    transform: translate(-50%, -50%) scale(1) rotate(-2deg);
+  }
+}
+
+@keyframes linePulse {
+  from {
+    transform: scaleX(0.72);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes threadDash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@keyframes tracePop {
+  from {
+    transform: scale(0.88);
+  }
+
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes mazeShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .age-card,
   .option-button,
-  .progress-track span {
+  .progress-track span,
+  .drop-zone,
+  .connect-node,
+  .connect-line,
+  .maze-cell {
     transition: none;
   }
 
-  .auto-hint span::before {
+  .auto-hint span::before,
+  .drop-zone.is-over-target,
+  .connect-line.is-preview,
+  .connect-target.is-over-target,
+  .gesture-thread line,
+  .gesture-ghost,
+  .maze-cell.is-traced,
+  .maze-board.is-miss {
     animation: none;
   }
 }
@@ -1618,6 +1931,28 @@
   .maze-board {
     width: min(100%, 276px);
     gap: 6px;
+  }
+
+  .gesture-ghost {
+    min-width: 108px;
+    max-width: min(156px, 46vw);
+    min-height: 78px;
+    padding: 10px;
+  }
+
+  .gesture-ghost .shape-tile {
+    width: 48px;
+    height: 48px;
+  }
+
+  .gesture-ghost .shape-triangle {
+    border-right-width: 29px;
+    border-bottom-width: 50px;
+    border-left-width: 29px;
+  }
+
+  .gesture-ghost .option-text {
+    font-size: 16px;
   }
 
   .maze-cell strong,
