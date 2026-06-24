@@ -1,0 +1,17 @@
+{
+  "name": "小小思维岛",
+  "short_name": "思维岛",
+  "description": "2-5 岁幼儿益智答题 App 原型。",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff4df",
+  "theme_color": "#332820",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
