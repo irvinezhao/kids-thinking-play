@@ -84,6 +84,8 @@ const autoAdvanceDelayMs = isTestFastMode ? 120 : 2000
 const shouldPlayFeedbackAudio = !isTestFastMode
 const correctPraise = '对啦，你真棒！'
 const retryPraise = '再想想吧～'
+const spokenCorrectPraise = '对啦，你真棒'
+const spokenRetryPraise = '再想想吧'
 const fireworkBursts = [
   { x: -160, y: -118, delay: 0 },
   { x: 164, y: -104, delay: 90 },
@@ -147,18 +149,58 @@ function formatDuration(seconds: number) {
   return `${Math.round(seconds / 60)} 分钟`
 }
 
-function playTone(frequency: number, startAt: number, duration: number, context: AudioContext, output: GainNode) {
+function playBellTone(
+  frequency: number,
+  startAt: number,
+  duration: number,
+  context: AudioContext,
+  output: AudioNode,
+  volume = 0.18,
+) {
+  const main = context.createOscillator()
+  const shimmer = context.createOscillator()
+  const gain = context.createGain()
+
+  main.type = 'sine'
+  shimmer.type = 'triangle'
+  main.frequency.setValueAtTime(frequency, startAt)
+  shimmer.frequency.setValueAtTime(frequency * 2.01, startAt)
+  shimmer.detune.setValueAtTime(5, startAt)
+
+  gain.gain.setValueAtTime(0.0001, startAt)
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018)
+  gain.gain.exponentialRampToValueAtTime(volume * 0.42, startAt + duration * 0.42)
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
+
+  main.connect(gain)
+  shimmer.connect(gain)
+  gain.connect(output)
+  main.start(startAt)
+  shimmer.start(startAt)
+  main.stop(startAt + duration + 0.04)
+  shimmer.stop(startAt + duration + 0.04)
+}
+
+function playSweep(
+  startFrequency: number,
+  endFrequency: number,
+  startAt: number,
+  duration: number,
+  context: AudioContext,
+  output: AudioNode,
+) {
   const oscillator = context.createOscillator()
   const gain = context.createGain()
-  oscillator.type = 'triangle'
-  oscillator.frequency.setValueAtTime(frequency, startAt)
+  oscillator.type = 'sine'
+  oscillator.frequency.setValueAtTime(startFrequency, startAt)
+  oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startAt + duration)
   gain.gain.setValueAtTime(0.0001, startAt)
-  gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.025)
+  gain.gain.exponentialRampToValueAtTime(0.1, startAt + 0.03)
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
   oscillator.connect(gain)
   gain.connect(output)
   oscillator.start(startAt)
-  oscillator.stop(startAt + duration + 0.02)
+  oscillator.stop(startAt + duration + 0.03)
 }
 
 function playFeedbackSound(correct: boolean) {
@@ -170,44 +212,73 @@ function playFeedbackSound(correct: boolean) {
 
     const context = new AudioContextClass()
     const output = context.createGain()
-    output.gain.value = correct ? 0.55 : 0.36
-    output.connect(context.destination)
+    const filter = context.createBiquadFilter()
+    const compressor = context.createDynamicsCompressor()
+    output.gain.value = correct ? 0.62 : 0.42
+    filter.type = 'lowpass'
+    filter.frequency.value = correct ? 5200 : 3600
+    filter.Q.value = 0.55
+    compressor.threshold.value = -22
+    compressor.knee.value = 18
+    compressor.ratio.value = 6
+    compressor.attack.value = 0.01
+    compressor.release.value = 0.2
+    output.connect(filter)
+    filter.connect(compressor)
+    compressor.connect(context.destination)
 
     if (context.state === 'suspended') {
       void context.resume()
     }
 
-    const now = context.currentTime + 0.02
+    const now = context.currentTime + 0.018
     const melody = correct
       ? [
-          { frequency: 523.25, offset: 0, duration: 0.12 },
-          { frequency: 659.25, offset: 0.09, duration: 0.12 },
-          { frequency: 783.99, offset: 0.18, duration: 0.14 },
-          { frequency: 1046.5, offset: 0.31, duration: 0.2 },
+          { frequency: 659.25, offset: 0, duration: 0.16, volume: 0.15 },
+          { frequency: 783.99, offset: 0.08, duration: 0.18, volume: 0.17 },
+          { frequency: 987.77, offset: 0.17, duration: 0.19, volume: 0.16 },
+          { frequency: 1318.51, offset: 0.28, duration: 0.24, volume: 0.13 },
         ]
       : [
-          { frequency: 392, offset: 0, duration: 0.14 },
-          { frequency: 329.63, offset: 0.14, duration: 0.18 },
+          { frequency: 493.88, offset: 0, duration: 0.18, volume: 0.1 },
+          { frequency: 587.33, offset: 0.14, duration: 0.2, volume: 0.11 },
+          { frequency: 659.25, offset: 0.28, duration: 0.22, volume: 0.09 },
         ]
 
-    melody.forEach((note) => playTone(note.frequency, now + note.offset, note.duration, context, output))
-    window.setTimeout(() => void context.close(), correct ? 850 : 620)
+    melody.forEach((note) =>
+      playBellTone(note.frequency, now + note.offset, note.duration, context, output, note.volume),
+    )
+    if (correct) {
+      playSweep(880, 1760, now + 0.16, 0.34, context, output)
+      playBellTone(1567.98, now + 0.38, 0.2, context, output, 0.08)
+    }
+    window.setTimeout(() => void context.close(), correct ? 980 : 820)
   } catch {
     // Audio feedback is a nicety; browsers can block it in quiet mode or tests.
   }
 }
 
+function voiceQualityScore(voice: SpeechSynthesisVoice) {
+  const signature = `${voice.lang} ${voice.name}`
+  let score = /zh|Chinese|Mandarin|中文|普通话/i.test(signature) ? 8 : 0
+  if (/Google|Microsoft|Tingting|Meijia|Sinji|Xiaoxiao|Yunxi|Premium|Natural/i.test(signature)) {
+    score += 4
+  }
+  if (/zh-CN|cmn-Hans|Mandarin/i.test(signature)) score += 2
+  if (voice.localService) score += 1
+  return score
+}
+
 function speakFeedback(correct: boolean) {
   if (!('speechSynthesis' in window)) return
   try {
-    const utterance = new SpeechSynthesisUtterance(correct ? correctPraise : retryPraise)
-    const voices = window.speechSynthesis.getVoices()
-    utterance.voice =
-      voices.find((voice) => /zh|Chinese|Mandarin|中文|普通话/i.test(`${voice.lang} ${voice.name}`)) ?? null
+    const utterance = new SpeechSynthesisUtterance(correct ? spokenCorrectPraise : spokenRetryPraise)
+    const voices = window.speechSynthesis.getVoices().sort((a, b) => voiceQualityScore(b) - voiceQualityScore(a))
+    utterance.voice = voices.find((voice) => voiceQualityScore(voice) > 0) ?? null
     utterance.lang = 'zh-CN'
-    utterance.rate = correct ? 1.08 : 0.98
-    utterance.pitch = correct ? 1.35 : 1.05
-    utterance.volume = 1
+    utterance.rate = correct ? 1.02 : 0.96
+    utterance.pitch = correct ? 1.16 : 1.02
+    utterance.volume = 0.96
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
   } catch {
@@ -217,7 +288,7 @@ function speakFeedback(correct: boolean) {
 
 function playAnswerFeedback(correct: boolean) {
   playFeedbackSound(correct)
-  speakFeedback(correct)
+  window.setTimeout(() => speakFeedback(correct), correct ? 180 : 130)
 }
 
 function normalizeVisual(input: unknown): VisualToken | null {
