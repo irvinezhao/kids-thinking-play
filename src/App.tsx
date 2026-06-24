@@ -20,6 +20,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
@@ -72,12 +73,31 @@ const validAges: AgeKey[] = ['age2', 'age3', 'age4']
 const validTemplates: TemplateKind[] = ['choice', 'drag', 'connect', 'shadow', 'maze', 'leftRight']
 const validShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star', 'pill']
 const validTones: Tone[] = ['coral', 'leaf', 'sky', 'sun', 'grape', 'ink']
+const urlParams = new URLSearchParams(window.location.search)
+const isTestFastMode = urlParams.get('testFast') === '1'
 
 const emptyActivity: ActivityStore = {
   attempts: [],
   sessions: [],
 }
-const autoAdvanceDelayMs = new URLSearchParams(window.location.search).get('testFast') === '1' ? 120 : 2000
+const autoAdvanceDelayMs = isTestFastMode ? 120 : 2000
+const shouldPlayFeedbackAudio = !isTestFastMode
+const correctPraise = '对啦，你真棒！'
+const retryPraise = '再想想吧～'
+const fireworkBursts = [
+  { x: -160, y: -118, delay: 0 },
+  { x: 164, y: -104, delay: 90 },
+  { x: 0, y: -156, delay: 160 },
+] as const
+const fireworkColors = ['var(--sun)', 'var(--coral)', 'var(--leaf)', 'var(--sky)', 'var(--grape)']
+const fireworkParticleCount = 14
+const retryPuffs = [
+  { x: -150, y: -86, size: 38, delay: 0 },
+  { x: 142, y: -76, size: 30, delay: 70 },
+  { x: -118, y: 104, size: 32, delay: 140 },
+  { x: 132, y: 92, size: 42, delay: 210 },
+  { x: 0, y: -128, size: 24, delay: 280 },
+] as const
 
 const sampleImport = JSON.stringify(
   [
@@ -125,6 +145,79 @@ function localDateKey(value: string | Date) {
 function formatDuration(seconds: number) {
   if (seconds < 60) return `${seconds} 秒`
   return `${Math.round(seconds / 60)} 分钟`
+}
+
+function playTone(frequency: number, startAt: number, duration: number, context: AudioContext, output: GainNode) {
+  const oscillator = context.createOscillator()
+  const gain = context.createGain()
+  oscillator.type = 'triangle'
+  oscillator.frequency.setValueAtTime(frequency, startAt)
+  gain.gain.setValueAtTime(0.0001, startAt)
+  gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.025)
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
+  oscillator.connect(gain)
+  gain.connect(output)
+  oscillator.start(startAt)
+  oscillator.stop(startAt + duration + 0.02)
+}
+
+function playFeedbackSound(correct: boolean) {
+  try {
+    const AudioContextClass =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+
+    const context = new AudioContextClass()
+    const output = context.createGain()
+    output.gain.value = correct ? 0.55 : 0.36
+    output.connect(context.destination)
+
+    if (context.state === 'suspended') {
+      void context.resume()
+    }
+
+    const now = context.currentTime + 0.02
+    const melody = correct
+      ? [
+          { frequency: 523.25, offset: 0, duration: 0.12 },
+          { frequency: 659.25, offset: 0.09, duration: 0.12 },
+          { frequency: 783.99, offset: 0.18, duration: 0.14 },
+          { frequency: 1046.5, offset: 0.31, duration: 0.2 },
+        ]
+      : [
+          { frequency: 392, offset: 0, duration: 0.14 },
+          { frequency: 329.63, offset: 0.14, duration: 0.18 },
+        ]
+
+    melody.forEach((note) => playTone(note.frequency, now + note.offset, note.duration, context, output))
+    window.setTimeout(() => void context.close(), correct ? 850 : 620)
+  } catch {
+    // Audio feedback is a nicety; browsers can block it in quiet mode or tests.
+  }
+}
+
+function speakFeedback(correct: boolean) {
+  if (!('speechSynthesis' in window)) return
+  try {
+    const utterance = new SpeechSynthesisUtterance(correct ? correctPraise : retryPraise)
+    const voices = window.speechSynthesis.getVoices()
+    utterance.voice =
+      voices.find((voice) => /zh|Chinese|Mandarin|中文|普通话/i.test(`${voice.lang} ${voice.name}`)) ?? null
+    utterance.lang = 'zh-CN'
+    utterance.rate = correct ? 1.08 : 0.98
+    utterance.pitch = correct ? 1.35 : 1.05
+    utterance.volume = 1
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+  } catch {
+    // Speech synthesis availability varies by browser and device.
+  }
+}
+
+function playAnswerFeedback(correct: boolean) {
+  playFeedbackSound(correct)
+  speakFeedback(correct)
 }
 
 function normalizeVisual(input: unknown): VisualToken | null {
@@ -237,6 +330,65 @@ function RadarChart({ values }: { values: Array<{ label: string; value: number }
   )
 }
 
+function FeedbackEffect({ correct }: { correct: boolean }) {
+  if (!correct) {
+    return (
+      <div className="answer-effect-layer wrong" aria-hidden="true">
+        <span className="retry-orbit" />
+        {retryPuffs.map((puff, index) => (
+          <span
+            className="thinking-puff"
+            key={`${puff.x}-${puff.y}`}
+            style={
+              {
+                '--puff-delay': `${puff.delay}ms`,
+                '--puff-size': `${puff.size}px`,
+                '--puff-x': `${puff.x}px`,
+                '--puff-y': `${puff.y}px`,
+              } as CSSProperties
+            }
+          >
+            {index < 3 && <i />}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="answer-effect-layer correct" aria-hidden="true">
+      <span className="celebration-ring" />
+      {fireworkBursts.map((burst, burstIndex) => (
+        <span
+          className="firework-burst"
+          key={`${burst.x}-${burst.y}`}
+          style={
+            {
+              '--burst-delay': `${burst.delay}ms`,
+              '--burst-x': `${burst.x}px`,
+              '--burst-y': `${burst.y}px`,
+            } as CSSProperties
+          }
+        >
+          {Array.from({ length: fireworkParticleCount }, (_, particleIndex) => (
+            <i
+              key={particleIndex}
+              style={
+                {
+                  '--angle': `${(360 / fireworkParticleCount) * particleIndex}deg`,
+                  '--distance': `${68 + ((particleIndex + burstIndex) % 4) * 13}px`,
+                  '--effect-color': fireworkColors[(particleIndex + burstIndex) % fireworkColors.length],
+                  '--particle-delay': `${burst.delay + particleIndex * 12}ms`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 function App() {
   const [screen, setScreen] = useState<ScreenMode>('home')
   const [selectedAge, setSelectedAge] = useState<AgeKey | null>(null)
@@ -325,6 +477,7 @@ function App() {
     if (!currentQuestion || pickedOption) return
     const correct = optionId === currentQuestion.answerId
     setPickedOption(optionId)
+    if (shouldPlayFeedbackAudio) playAnswerFeedback(correct)
     recordAttempt(currentQuestion, optionId, correct)
     if (correct) {
       setAnswers((existing) => [...existing, { questionId: currentQuestion.id, optionId }])
@@ -915,20 +1068,26 @@ function App() {
       )}
 
       {pickedOption && (
-        <section className={answeredCorrectly ? 'feedback correct' : 'feedback wrong'} aria-live="polite">
-          <div className="feedback-copy">
-            {answeredCorrectly ? (
-              <CheckCircle2 size={25} aria-hidden="true" />
-            ) : (
-              <XCircle size={25} aria-hidden="true" />
-            )}
-            <p>{answeredCorrectly ? currentQuestion.success : currentQuestion.retry}</p>
-          </div>
-          <div className="auto-hint" aria-hidden="true">
-            <span />
-            {answeredCorrectly ? '马上下一题' : '马上再试'}
-          </div>
-        </section>
+        <>
+          <FeedbackEffect correct={answeredCorrectly} />
+          <section className={answeredCorrectly ? 'feedback correct' : 'feedback wrong'} aria-live="polite">
+            <div className="feedback-copy">
+              {answeredCorrectly ? (
+                <CheckCircle2 size={27} aria-hidden="true" />
+              ) : (
+                <XCircle size={27} aria-hidden="true" />
+              )}
+              <div className="feedback-text">
+                <strong>{answeredCorrectly ? correctPraise : retryPraise}</strong>
+                <p>{answeredCorrectly ? currentQuestion.success : currentQuestion.retry}</p>
+              </div>
+            </div>
+            <div className="auto-hint" aria-hidden="true">
+              <span />
+              {answeredCorrectly ? '马上下一题' : '马上再试'}
+            </div>
+          </section>
+        </>
       )}
     </main>
   )
