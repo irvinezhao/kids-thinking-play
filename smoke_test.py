@@ -52,7 +52,7 @@ def run() -> None:
         desktop.wait_for_load_state("networkidle")
 
         expect(desktop.get_by_role("heading", name="小小思维岛")).to_be_visible()
-        expect(desktop.get_by_text("题库 120 道 · 今日 10 题")).to_have_count(3)
+        expect(desktop.get_by_text("题库 150 道 · 今日 10 题")).to_have_count(3)
         expect(desktop.get_by_role("button", name="开始 2-3 岁 练习")).to_be_visible()
         expect(desktop.get_by_role("button", name="开始 3-4 岁 练习")).to_be_visible()
         expect(desktop.get_by_role("button", name="开始 4-5 岁 练习")).to_be_visible()

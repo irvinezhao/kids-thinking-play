@@ -35,6 +35,7 @@ export const ageTracks: AgeTrack[] = [
 
 export const sessionQuestionCount = 10
 
+const questionFamilyCount = 30
 const shapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star']
 const tones: Tone[] = ['coral', 'leaf', 'sky', 'sun', 'grape']
 const shapeNames: Record<ShapeName, string> = {
@@ -92,6 +93,33 @@ const categorySets = [
       { text: '小鸟', tone: 'sky' as Tone, shape: 'triangle' as ShapeName },
     ],
     outside: { text: '帽子', tone: 'grape' as Tone, shape: 'pill' as ShapeName },
+  },
+  {
+    label: '衣物',
+    inside: [
+      { text: '帽子', tone: 'grape' as Tone, shape: 'pill' as ShapeName },
+      { text: '袜子', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
+      { text: '围巾', tone: 'sun' as Tone, shape: 'pill' as ShapeName },
+    ],
+    outside: { text: '饼干', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
+  },
+  {
+    label: '餐具',
+    inside: [
+      { text: '勺子', tone: 'sky' as Tone, shape: 'pill' as ShapeName },
+      { text: '碗', tone: 'sun' as Tone, shape: 'circle' as ShapeName },
+      { text: '杯子', tone: 'leaf' as Tone, shape: 'square' as ShapeName },
+    ],
+    outside: { text: '小鼓', tone: 'grape' as Tone, shape: 'circle' as ShapeName },
+  },
+  {
+    label: '乐器',
+    inside: [
+      { text: '小鼓', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
+      { text: '铃铛', tone: 'sun' as Tone, shape: 'diamond' as ShapeName },
+      { text: '沙锤', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
+    ],
+    outside: { text: '小船', tone: 'sky' as Tone, shape: 'pill' as ShapeName },
   },
 ]
 
@@ -161,7 +189,7 @@ function matchQuestion(age: AgeKey, seed: number, difficulty: Difficulty): Quest
     options: result.options,
     success: `找到了同样的${toneNames[target.tone]}${shapeNames[target.shape]}。`,
     retry: '再看看颜色和形状，要两个都一样。',
-    tags: ['观察力', '颜色', '形状'],
+    tags: ['观察力', '颜色', '形状', '形色匹配'],
     difficulty,
   })
 }
@@ -187,7 +215,7 @@ function countQuestion(age: AgeKey, seed: number): Question {
     options: result.options,
     success: `这一组有 ${rightCount} 个，更多。`,
     retry: '可以一个一个点着数。',
-    tags: ['数量', '比较'],
+    tags: ['数量', '比较', '数数'],
     difficulty: 1,
   })
 }
@@ -216,7 +244,7 @@ function oddQuestion(age: AgeKey, seed: number): Question {
     options: result.options,
     success: '找到了不一样的那个。',
     retry: '先看颜色，再看形状。',
-    tags: ['观察力', '分类'],
+    tags: ['观察力', '分类', '差异辨别'],
     difficulty: 1,
   })
 }
@@ -276,28 +304,37 @@ function leftRightQuestion(age: AgeKey, seed: number, difficulty: Difficulty): Q
 
 function dragQuestion(age: AgeKey, seed: number, difficulty: Difficulty): Question {
   const targetTone = tones[seed % tones.length]
-  const correct = visual(shapes[seed % shapes.length], targetTone)
-  const wrong1 = visual(shapes[(seed + 1) % shapes.length], tones[(seed + 1) % tones.length])
-  const wrong2 = visual(shapes[(seed + 2) % shapes.length], tones[(seed + 2) % tones.length])
+  const targetShape = shapes[seed % shapes.length]
+  const useShapeBox = difficulty > 1 && seed % 3 === 1
+  const correct = useShapeBox
+    ? visual(targetShape, tones[(seed + 2) % tones.length])
+    : visual(shapes[seed % shapes.length], targetTone)
+  const wrong1 = useShapeBox
+    ? visual(shapes[(seed + 1) % shapes.length], correct.tone)
+    : visual(shapes[(seed + 1) % shapes.length], tones[(seed + 1) % tones.length])
+  const wrong2 = useShapeBox
+    ? visual(shapes[(seed + 2) % shapes.length], tones[(seed + 3) % tones.length])
+    : visual(shapes[(seed + 2) % shapes.length], tones[(seed + 2) % tones.length])
   const result = withAnswer(
     [option('correct', [correct]), option('wrong-1', [wrong1]), option('wrong-2', [wrong2])],
     0,
     seed,
   )
+  const ruleLabel = useShapeBox ? shapeNames[targetShape] : toneNames[targetTone]
 
   return makeQuestion(500 + seed, {
     age,
     template: 'drag',
     skill: '拖拽分类',
-    prompt: `把${toneNames[targetTone]}小块拖到盒子里`,
-    scene: [visual('pill', targetTone, false, toneNames[targetTone])],
+    prompt: `把${ruleLabel}小块拖到盒子里`,
+    scene: [visual('pill', useShapeBox ? 'sky' : targetTone, false, ruleLabel)],
     answerId: result.answerId,
     options: result.options,
-    success: `放进了${toneNames[targetTone]}盒子。`,
-    retry: `盒子要收${toneNames[targetTone]}的小块。`,
-    tags: ['分类', '颜色', '手眼协调'],
+    success: `放进了${ruleLabel}盒子。`,
+    retry: `盒子要收${ruleLabel}的小块。`,
+    tags: useShapeBox ? ['分类', '形状', '手眼协调'] : ['分类', '颜色', '手眼协调'],
     difficulty,
-    meta: { dropLabel: `${toneNames[targetTone]}盒子`, relation: 'tone' },
+    meta: { dropLabel: `${ruleLabel}盒子`, relation: useShapeBox ? 'shape' : 'tone' },
   })
 }
 
@@ -425,18 +462,48 @@ function analogyQuestion(age: AgeKey, seed: number): Question {
 }
 
 function mazeQuestion(age: AgeKey, seed: number): Question {
-  const exits = [
-    { id: 'a', label: '出口 A', cell: 3 },
-    { id: 'b', label: '出口 B', cell: 15 },
-    { id: 'c', label: '出口 C', cell: 12 },
-  ]
+  const mazeLayouts = [
+    {
+      exits: [
+        { id: 'a', label: '出口 A', cell: 3 },
+        { id: 'b', label: '出口 B', cell: 15 },
+        { id: 'c', label: '出口 C', cell: 12 },
+      ],
+      paths: {
+        a: [0, 1, 2, 3],
+        b: [0, 4, 5, 9, 10, 14, 15],
+        c: [0, 4, 8, 12],
+      },
+    },
+    {
+      exits: [
+        { id: 'a', label: '出口 A', cell: 7 },
+        { id: 'b', label: '出口 B', cell: 13 },
+        { id: 'c', label: '出口 C', cell: 15 },
+      ],
+      paths: {
+        a: [0, 1, 5, 6, 7],
+        b: [0, 4, 8, 9, 13],
+        c: [0, 1, 2, 6, 10, 14, 15],
+      },
+    },
+    {
+      exits: [
+        { id: 'a', label: '出口 A', cell: 11 },
+        { id: 'b', label: '出口 B', cell: 14 },
+        { id: 'c', label: '出口 C', cell: 5 },
+      ],
+      paths: {
+        a: [0, 4, 8, 9, 10, 11],
+        b: [0, 1, 2, 6, 10, 14],
+        c: [0, 1, 5],
+      },
+    },
+  ] as const
+  const layout = mazeLayouts[seed % mazeLayouts.length]
+  const exits = [...layout.exits]
   const answerId = optionIds[seed % 3]
   const answerExit = exits.find((exit) => exit.id === answerId) ?? exits[0]
-  const paths: Record<string, number[]> = {
-    a: [0, 1, 2, 3],
-    b: [0, 4, 5, 9, 10, 14, 15],
-    c: [0, 4, 8, 12],
-  }
 
   return makeQuestion(1000 + seed, {
     age,
@@ -453,7 +520,7 @@ function mazeQuestion(age: AgeKey, seed: number): Question {
     meta: {
       maze: {
         size: 4,
-        path: paths[answerId],
+        path: [...layout.paths[answerId]],
         exits,
       },
     },
@@ -462,31 +529,31 @@ function mazeQuestion(age: AgeKey, seed: number): Question {
 
 function buildAge2(): Question[] {
   return [
-    ...Array.from({ length: 24 }, (_, index) => matchQuestion('age2', index, 1)),
-    ...Array.from({ length: 24 }, (_, index) => countQuestion('age2', index)),
-    ...Array.from({ length: 24 }, (_, index) => oddQuestion('age2', index)),
-    ...Array.from({ length: 24 }, (_, index) => shadowQuestion('age2', index, 1)),
-    ...Array.from({ length: 24 }, (_, index) => dragQuestion('age2', index, 1)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => matchQuestion('age2', index, 1)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => countQuestion('age2', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => oddQuestion('age2', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => shadowQuestion('age2', index, 1)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => dragQuestion('age2', index, 1)),
   ]
 }
 
 function buildAge3(): Question[] {
   return [
-    ...Array.from({ length: 24 }, (_, index) => sequenceQuestion('age3', index, 2)),
-    ...Array.from({ length: 24 }, (_, index) => categoryQuestion('age3', index)),
-    ...Array.from({ length: 24 }, (_, index) => connectQuestion('age3', index, 2)),
-    ...Array.from({ length: 24 }, (_, index) => shadowQuestion('age3', index, 2)),
-    ...Array.from({ length: 24 }, (_, index) => leftRightQuestion('age3', index, 2)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age3', index, 2)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => categoryQuestion('age3', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => connectQuestion('age3', index, 2)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => shadowQuestion('age3', index, 2)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => leftRightQuestion('age3', index, 2)),
   ]
 }
 
 function buildAge4(): Question[] {
   return [
-    ...Array.from({ length: 24 }, (_, index) => sequenceQuestion('age4', index, 3)),
-    ...Array.from({ length: 24 }, (_, index) => analogyQuestion('age4', index)),
-    ...Array.from({ length: 24 }, (_, index) => mazeQuestion('age4', index)),
-    ...Array.from({ length: 24 }, (_, index) => connectQuestion('age4', index, 3)),
-    ...Array.from({ length: 24 }, (_, index) => leftRightQuestion('age4', index, 3)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age4', index, 3)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => analogyQuestion('age4', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => mazeQuestion('age4', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => connectQuestion('age4', index, 3)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => leftRightQuestion('age4', index, 3)),
   ]
 }
 

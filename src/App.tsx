@@ -13,6 +13,8 @@ import {
   Star,
   Trophy,
   Upload,
+  Volume2,
+  VolumeX,
   XCircle,
 } from 'lucide-react'
 import {
@@ -69,6 +71,7 @@ type ActiveOptionGesture = {
 const progressStorageKey = 'kids-thinking-play-progress'
 const activityStorageKey = 'kids-thinking-play-activity'
 const importedStorageKey = 'kids-thinking-play-imported-questions'
+const soundStorageKey = 'kids-thinking-play-sound-enabled'
 const validAges: AgeKey[] = ['age2', 'age3', 'age4']
 const validTemplates: TemplateKind[] = ['choice', 'drag', 'connect', 'shadow', 'maze', 'leftRight']
 const validShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star', 'pill']
@@ -472,6 +475,9 @@ function App() {
   const [importedQuestions, setImportedQuestions] = useState<Question[]>(() => readJson(importedStorageKey, []))
   const [importText, setImportText] = useState('')
   const [importMessage, setImportMessage] = useState('还没有导入内容。')
+  const [soundEnabled, setSoundEnabled] = useState(() => readJson(soundStorageKey, true))
+  const [reviewQuestionIds, setReviewQuestionIds] = useState<string[] | null>(null)
+  const [sessionWrongQuestionIds, setSessionWrongQuestionIds] = useState<string[]>([])
   const [activeGesture, setActiveGestureState] = useState<ActiveOptionGesture | null>(null)
   const finishRecordedRef = useRef(false)
   const sessionStartedAtRef = useRef<number | null>(null)
@@ -481,14 +487,21 @@ function App() {
 
   const questionPool = useMemo(() => [...generatedQuestions, ...importedQuestions], [importedQuestions])
   const currentTrack = ageTracks.find((track) => track.key === selectedAge) ?? null
+  const reviewQuestions = useMemo(() => {
+    if (!reviewQuestionIds) return null
+    return reviewQuestionIds
+      .map((id) => questionPool.find((question) => question.id === id && question.status === 'approved'))
+      .filter((question): question is Question => Boolean(question))
+  }, [questionPool, reviewQuestionIds])
   const trackQuestions = useMemo(
-    () => (selectedAge ? pickSessionQuestions(questionPool, selectedAge, sessionSeed) : []),
-    [questionPool, selectedAge, sessionSeed],
+    () => reviewQuestions ?? (selectedAge ? pickSessionQuestions(questionPool, selectedAge, sessionSeed) : []),
+    [questionPool, reviewQuestions, selectedAge, sessionSeed],
   )
   const currentQuestion = trackQuestions[questionIndex] ?? null
   const score = answers.length
   const finished = selectedAge !== null && questionIndex >= trackQuestions.length
   const totalApproved = questionPool.filter((question) => question.status === 'approved').length
+  const isReviewSession = Boolean(reviewQuestionIds)
 
   useEffect(() => {
     window.localStorage.setItem(progressStorageKey, JSON.stringify(progress))
@@ -502,12 +515,21 @@ function App() {
     window.localStorage.setItem(importedStorageKey, JSON.stringify(importedQuestions))
   }, [importedQuestions])
 
+  useEffect(() => {
+    window.localStorage.setItem(soundStorageKey, JSON.stringify(soundEnabled))
+    if (!soundEnabled && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+  }, [soundEnabled])
+
   function startTrack(age: AgeKey) {
     setScreen('home')
     setSelectedAge(age)
     setQuestionIndex(0)
     setAnswers([])
     setPickedOption(null)
+    setReviewQuestionIds(null)
+    setSessionWrongQuestionIds([])
     setSessionSeed(Date.now())
     finishRecordedRef.current = false
     sessionStartedAtRef.current = Date.now()
@@ -519,8 +541,48 @@ function App() {
     setQuestionIndex(0)
     setAnswers([])
     setPickedOption(null)
+    setReviewQuestionIds(null)
+    setSessionWrongQuestionIds([])
     finishRecordedRef.current = false
     sessionStartedAtRef.current = null
+  }
+
+  function toggleSound() {
+    setSoundEnabled((enabled) => {
+      const nextEnabled = !enabled
+      if (nextEnabled && shouldPlayFeedbackAudio) {
+        window.setTimeout(() => playFeedbackSound(true), 0)
+      }
+      return nextEnabled
+    })
+  }
+
+  function replayFeedback(correct: boolean) {
+    if (!soundEnabled) {
+      setSoundEnabled(true)
+    }
+    if (shouldPlayFeedbackAudio) {
+      window.setTimeout(() => playAnswerFeedback(correct), soundEnabled ? 0 : 40)
+    }
+  }
+
+  function startReview(questionIds: string[]) {
+    const uniqueQuestionIds = [...new Set(questionIds)]
+    const questions = uniqueQuestionIds
+      .map((id) => questionPool.find((question) => question.id === id && question.status === 'approved'))
+      .filter((question): question is Question => Boolean(question))
+    if (!questions.length) return
+
+    setScreen('home')
+    setSelectedAge(questions[0].age)
+    setQuestionIndex(0)
+    setAnswers([])
+    setPickedOption(null)
+    setReviewQuestionIds(questions.map((question) => question.id))
+    setSessionWrongQuestionIds([])
+    setSessionSeed(Date.now())
+    finishRecordedRef.current = false
+    sessionStartedAtRef.current = Date.now()
   }
 
   function recordAttempt(question: Question, optionId: string, correct: boolean) {
@@ -548,10 +610,14 @@ function App() {
     if (!currentQuestion || pickedOption) return
     const correct = optionId === currentQuestion.answerId
     setPickedOption(optionId)
-    if (shouldPlayFeedbackAudio) playAnswerFeedback(correct)
+    if (soundEnabled && shouldPlayFeedbackAudio) playAnswerFeedback(correct)
     recordAttempt(currentQuestion, optionId, correct)
     if (correct) {
       setAnswers((existing) => [...existing, { questionId: currentQuestion.id, optionId }])
+    } else {
+      setSessionWrongQuestionIds((existing) =>
+        existing.includes(currentQuestion.id) ? existing : [...existing, currentQuestion.id],
+      )
     }
   }
 
@@ -648,17 +714,19 @@ function App() {
       Math.round((Date.now() - (sessionStartedAtRef.current ?? Date.now())) / 1000),
     )
 
-    setProgress((existing) => {
-      const previous = existing[selectedAge]
-      return {
-        ...existing,
-        [selectedAge]: {
-          plays: (previous?.plays ?? 0) + 1,
-          best: Math.max(previous?.best ?? 0, score),
-          lastTotal: trackQuestions.length,
-        },
-      }
-    })
+    if (!isReviewSession) {
+      setProgress((existing) => {
+        const previous = existing[selectedAge]
+        return {
+          ...existing,
+          [selectedAge]: {
+            plays: (previous?.plays ?? 0) + 1,
+            best: Math.max(previous?.best ?? 0, score),
+            lastTotal: trackQuestions.length,
+          },
+        }
+      })
+    }
     setActivity((existing) => ({
       ...existing,
       sessions: [
@@ -718,7 +786,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (finished && !finishRecordedRef.current) {
+  if (finished && !finishRecordedRef.current) {
       finishRecordedRef.current = true
       finishTrack()
     }
@@ -747,6 +815,7 @@ function App() {
     .filter((session) => localDateKey(session.createdAt) === todayKey)
     .reduce((sum, session) => sum + session.durationSeconds, 0)
   const wrongAttempts = activity.attempts.filter((attempt) => !attempt.correct).slice(-3).reverse()
+  const wrongReviewQuestionIds = [...new Set(wrongAttempts.map((attempt) => attempt.questionId))]
   const recentAttempts = activity.attempts.slice(-120)
   const recentCorrect = recentAttempts.filter((attempt) => attempt.correct).length
   const recentAccuracy = recentAttempts.length ? Math.round((recentCorrect / recentAttempts.length) * 100) : 0
@@ -778,6 +847,15 @@ function App() {
             </div>
           </div>
           <div className="top-actions">
+            <button
+              aria-label={soundEnabled ? '关闭声音' : '打开声音'}
+              className={soundEnabled ? 'small-tool-button sound-toggle' : 'small-tool-button sound-toggle is-muted'}
+              type="button"
+              onClick={toggleSound}
+            >
+              {soundEnabled ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}
+              <span>{soundEnabled ? '声音' : '静音'}</span>
+            </button>
             <button className="small-tool-button" type="button" onClick={showParentMode}>
               <BarChart3 size={18} aria-hidden="true" />
               家长
@@ -819,14 +897,36 @@ function App() {
                 <RadarChart values={radarValues} />
               </article>
               <article className="dashboard-card">
-                <h3>最近错题</h3>
+                <div className="card-title-row">
+                  <h3>最近错题</h3>
+                  {wrongReviewQuestionIds.length > 0 && (
+                    <button
+                      className="mini-action-button"
+                      type="button"
+                      onClick={() => startReview(wrongReviewQuestionIds)}
+                    >
+                      <RotateCcw size={15} aria-hidden="true" />
+                      重练全部
+                    </button>
+                  )}
+                </div>
                 <div className="wrong-list">
                   {wrongAttempts.length ? (
                     wrongAttempts.map((attempt) => (
                       <div className="wrong-item" key={attempt.id}>
-                        <span>{attempt.skill}</span>
-                        <strong>{attempt.prompt}</strong>
-                        <p>{attempt.retry}</p>
+                        <div className="wrong-item-copy">
+                          <span>{attempt.skill} · 难度 {attempt.difficulty}</span>
+                          <strong>{attempt.prompt}</strong>
+                          <p>{attempt.retry}</p>
+                        </div>
+                        <button
+                          className="wrong-retry-button"
+                          type="button"
+                          onClick={() => startReview([attempt.questionId])}
+                        >
+                          <RotateCcw size={15} aria-hidden="true" />
+                          重练
+                        </button>
                       </div>
                     ))
                   ) : (
@@ -987,13 +1087,22 @@ function App() {
   }
 
   if (finished || !currentQuestion || !currentTrack) {
+    const resultTitle = isReviewSession ? '错题重练' : currentTrack?.label ?? '练习'
     return (
       <main className="app-shell result-screen">
         <header className="quiz-topbar">
           <button className="icon-button" type="button" onClick={goHome} aria-label="返回首页">
             <Home size={22} aria-hidden="true" />
           </button>
-          <span>{currentTrack?.label ?? '练习'}</span>
+          <span>{resultTitle}</span>
+          <button
+            className={soundEnabled ? 'icon-button sound-icon-button' : 'icon-button sound-icon-button is-muted'}
+            type="button"
+            onClick={toggleSound}
+            aria-label={soundEnabled ? '关闭声音' : '打开声音'}
+          >
+            {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
+          </button>
         </header>
 
         <section className="result-panel" aria-live="polite">
@@ -1002,8 +1111,18 @@ function App() {
           </span>
           <p className="eyebrow">完成</p>
           <h2>{score} / {trackQuestions.length}</h2>
-          <p>这组练习已经做完了，错题已记录到家长模式。</p>
+          <p>{isReviewSession ? '这组错题已经练完了。' : '这组练习已经做完了，错题已记录到家长模式。'}</p>
           <div className="result-actions">
+            {sessionWrongQuestionIds.length > 0 && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => startReview(sessionWrongQuestionIds)}
+              >
+                <RotateCcw size={20} aria-hidden="true" />
+                重练错题
+              </button>
+            )}
             <button className="primary-button" type="button" onClick={() => startTrack(selectedAge)}>
               <RotateCcw size={20} aria-hidden="true" />
               再玩一次
@@ -1020,6 +1139,7 @@ function App() {
 
   const answeredCorrectly = pickedOption === currentQuestion.answerId
   const progressPercent = ((questionIndex + 1) / trackQuestions.length) * 100
+  const sessionTitle = isReviewSession ? '错题重练' : currentTrack.label
   const activeGestureOption = activeGesture
     ? currentQuestion.options.find((option) => option.id === activeGesture.optionId)
     : null
@@ -1036,9 +1156,17 @@ function App() {
           <ArrowLeft size={22} aria-hidden="true" />
         </button>
         <div className="quiz-title">
-          <span>{currentTrack.label}</span>
+          <span>{sessionTitle}</span>
           <strong>{questionIndex + 1} / {trackQuestions.length}</strong>
         </div>
+        <button
+          className={soundEnabled ? 'icon-button sound-icon-button' : 'icon-button sound-icon-button is-muted'}
+          type="button"
+          onClick={toggleSound}
+          aria-label={soundEnabled ? '关闭声音' : '打开声音'}
+        >
+          {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
+        </button>
       </header>
 
       <div className="progress-track" aria-hidden="true">
@@ -1153,6 +1281,10 @@ function App() {
                 <p>{answeredCorrectly ? currentQuestion.success : currentQuestion.retry}</p>
               </div>
             </div>
+            <button className="feedback-replay" type="button" onClick={() => replayFeedback(answeredCorrectly)}>
+              {soundEnabled ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
+              {soundEnabled ? '再听一遍' : '打开声音'}
+            </button>
             <div className="auto-hint" aria-hidden="true">
               <span />
               {answeredCorrectly ? '马上下一题' : '马上再试'}
