@@ -2,6 +2,7 @@ import type {
   AgeKey,
   AgeTrack,
   Difficulty,
+  ItemName,
   Option,
   Question,
   ShapeName,
@@ -56,70 +57,145 @@ const toneNames: Record<Tone, string> = {
 }
 const sides = ['左边', '右边'] as const
 const optionIds = ['a', 'b', 'c'] as const
+const itemShapes: Record<ItemName, ShapeName> = {
+  apple: 'circle',
+  banana: 'pill',
+  grapes: 'circle',
+  carrot: 'triangle',
+  hat: 'pill',
+  sock: 'pill',
+  scarf: 'pill',
+  cookie: 'circle',
+  car: 'square',
+  boat: 'pill',
+  plane: 'triangle',
+  ball: 'circle',
+  blocks: 'square',
+  pinwheel: 'star',
+  cat: 'circle',
+  dog: 'square',
+  bird: 'triangle',
+  spoon: 'pill',
+  bowl: 'circle',
+  cup: 'square',
+  drum: 'circle',
+  bell: 'diamond',
+  maraca: 'pill',
+}
+const itemTones: Record<ItemName, Tone> = {
+  apple: 'coral',
+  banana: 'sun',
+  grapes: 'grape',
+  carrot: 'coral',
+  hat: 'grape',
+  sock: 'leaf',
+  scarf: 'sun',
+  cookie: 'coral',
+  car: 'sky',
+  boat: 'leaf',
+  plane: 'sun',
+  ball: 'coral',
+  blocks: 'sky',
+  pinwheel: 'grape',
+  cat: 'sun',
+  dog: 'coral',
+  bird: 'sky',
+  spoon: 'sky',
+  bowl: 'sun',
+  cup: 'leaf',
+  drum: 'grape',
+  bell: 'sun',
+  maraca: 'leaf',
+}
+const itemNames: Record<ItemName, string> = {
+  apple: '苹果',
+  banana: '香蕉',
+  grapes: '葡萄',
+  carrot: '胡萝卜',
+  hat: '帽子',
+  sock: '袜子',
+  scarf: '围巾',
+  cookie: '饼干',
+  car: '小车',
+  boat: '小船',
+  plane: '飞机',
+  ball: '皮球',
+  blocks: '积木',
+  pinwheel: '风车',
+  cat: '小猫',
+  dog: '小狗',
+  bird: '小鸟',
+  spoon: '勺子',
+  bowl: '碗',
+  cup: '杯子',
+  drum: '小鼓',
+  bell: '铃铛',
+  maraca: '沙锤',
+}
 
 const categorySets = [
   {
     label: '水果',
     inside: [
-      { text: '苹果', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
-      { text: '香蕉', tone: 'sun' as Tone, shape: 'pill' as ShapeName },
-      { text: '葡萄', tone: 'grape' as Tone, shape: 'circle' as ShapeName },
+      { text: '苹果', item: 'apple' as ItemName },
+      { text: '香蕉', item: 'banana' as ItemName },
+      { text: '葡萄', item: 'grapes' as ItemName },
     ],
-    outside: { text: '胡萝卜', tone: 'coral' as Tone, shape: 'triangle' as ShapeName },
+    outside: { text: '胡萝卜', item: 'carrot' as ItemName },
   },
   {
     label: '交通工具',
     inside: [
-      { text: '小车', tone: 'sky' as Tone, shape: 'square' as ShapeName },
-      { text: '轮船', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
-      { text: '飞机', tone: 'sun' as Tone, shape: 'triangle' as ShapeName },
+      { text: '小车', item: 'car' as ItemName },
+      { text: '小船', item: 'boat' as ItemName },
+      { text: '飞机', item: 'plane' as ItemName },
     ],
-    outside: { text: '皮球', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
+    outside: { text: '皮球', item: 'ball' as ItemName },
   },
   {
     label: '玩具',
     inside: [
-      { text: '积木', tone: 'sky' as Tone, shape: 'square' as ShapeName },
-      { text: '皮球', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
-      { text: '风车', tone: 'grape' as Tone, shape: 'star' as ShapeName },
+      { text: '积木', item: 'blocks' as ItemName },
+      { text: '皮球', item: 'ball' as ItemName },
+      { text: '风车', item: 'pinwheel' as ItemName },
     ],
-    outside: { text: '袜子', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
+    outside: { text: '袜子', item: 'sock' as ItemName },
   },
   {
     label: '动物',
     inside: [
-      { text: '小猫', tone: 'sun' as Tone, shape: 'circle' as ShapeName },
-      { text: '小狗', tone: 'coral' as Tone, shape: 'square' as ShapeName },
-      { text: '小鸟', tone: 'sky' as Tone, shape: 'triangle' as ShapeName },
+      { text: '小猫', item: 'cat' as ItemName },
+      { text: '小狗', item: 'dog' as ItemName },
+      { text: '小鸟', item: 'bird' as ItemName },
     ],
-    outside: { text: '帽子', tone: 'grape' as Tone, shape: 'pill' as ShapeName },
+    outside: { text: '帽子', item: 'hat' as ItemName },
   },
   {
     label: '衣物',
     inside: [
-      { text: '帽子', tone: 'grape' as Tone, shape: 'pill' as ShapeName },
-      { text: '袜子', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
-      { text: '围巾', tone: 'sun' as Tone, shape: 'pill' as ShapeName },
+      { text: '帽子', item: 'hat' as ItemName },
+      { text: '袜子', item: 'sock' as ItemName },
+      { text: '围巾', item: 'scarf' as ItemName },
     ],
-    outside: { text: '饼干', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
+    outside: { text: '饼干', item: 'cookie' as ItemName },
   },
   {
     label: '餐具',
     inside: [
-      { text: '勺子', tone: 'sky' as Tone, shape: 'pill' as ShapeName },
-      { text: '碗', tone: 'sun' as Tone, shape: 'circle' as ShapeName },
-      { text: '杯子', tone: 'leaf' as Tone, shape: 'square' as ShapeName },
+      { text: '勺子', item: 'spoon' as ItemName },
+      { text: '碗', item: 'bowl' as ItemName },
+      { text: '杯子', item: 'cup' as ItemName },
     ],
-    outside: { text: '小鼓', tone: 'grape' as Tone, shape: 'circle' as ShapeName },
+    outside: { text: '小鼓', item: 'drum' as ItemName },
   },
   {
     label: '乐器',
     inside: [
-      { text: '小鼓', tone: 'coral' as Tone, shape: 'circle' as ShapeName },
-      { text: '铃铛', tone: 'sun' as Tone, shape: 'diamond' as ShapeName },
-      { text: '沙锤', tone: 'leaf' as Tone, shape: 'pill' as ShapeName },
+      { text: '小鼓', item: 'drum' as ItemName },
+      { text: '铃铛', item: 'bell' as ItemName },
+      { text: '沙锤', item: 'maraca' as ItemName },
     ],
-    outside: { text: '小船', tone: 'sky' as Tone, shape: 'pill' as ShapeName },
+    outside: { text: '小船', item: 'boat' as ItemName },
   },
 ]
 
@@ -133,6 +209,16 @@ function token(index: number, offset = 0, small = false): VisualToken {
 
 function visual(shape: ShapeName, tone: Tone, small = false, label?: string): VisualToken {
   return { shape, tone, small, label }
+}
+
+function itemVisual(item: ItemName, small = false): VisualToken {
+  return {
+    shape: itemShapes[item],
+    tone: itemTones[item],
+    item,
+    label: itemNames[item],
+    small,
+  }
 }
 
 function option(id: string, visuals: VisualToken[], text?: string): Option {
@@ -373,11 +459,13 @@ function categoryQuestion(age: AgeKey, seed: number): Question {
   const set = categorySets[seed % categorySets.length]
   const inside = set.inside
   const outside = set.outside
+  const insideOffset = seed % inside.length
+  const examples = [inside[insideOffset], inside[(insideOffset + 1) % inside.length]]
   const result = withAnswer(
     [
-      option('wrong-1', [visual(inside[0].shape, inside[0].tone)], inside[0].text),
-      option('wrong-2', [visual(inside[1].shape, inside[1].tone)], inside[1].text),
-      option('correct', [visual(outside.shape, outside.tone)], outside.text),
+      option('wrong-1', [itemVisual(inside[0].item)], inside[0].text),
+      option('wrong-2', [itemVisual(inside[1].item)], inside[1].text),
+      option('correct', [itemVisual(outside.item)], outside.text),
     ],
     2,
     seed,
@@ -388,12 +476,16 @@ function categoryQuestion(age: AgeKey, seed: number): Question {
     template: 'choice',
     skill: '分类',
     prompt: `哪一个不是${set.label}？`,
-    scene: [visual('pill', 'leaf', false, set.label)],
+    scene: [
+      visual('pill', 'leaf', false, set.label),
+      itemVisual(examples[0].item, true),
+      itemVisual(examples[1].item, true),
+    ],
     answerId: result.answerId,
     options: result.options,
     success: `${outside.text}不属于${set.label}。`,
     retry: `想一想哪些是${set.label}。`,
-    tags: ['分类', '常识'],
+    tags: ['分类', '常识', set.label],
     difficulty: 2,
   })
 }
@@ -457,6 +549,80 @@ function analogyQuestion(age: AgeKey, seed: number): Question {
     success: '变化规则是从大变小，形状不变。',
     retry: '先看前两个图形发生了什么变化。',
     tags: ['逻辑', '类比', '空间'],
+    difficulty: 3,
+  })
+}
+
+function matrixQuestion(age: AgeKey, seed: number): Question {
+  const baseShape = shapes[seed % shapes.length]
+  const nextShape = shapes[(seed + 2) % shapes.length]
+  const sourceTone = tones[(seed + 1) % tones.length]
+  const targetTone = tones[(seed + 3) % tones.length]
+  const applyTone = seed % 2 === 0
+  const topLeft = visual(baseShape, sourceTone)
+  const topRight = applyTone ? visual(baseShape, targetTone) : visual(nextShape, sourceTone)
+  const bottomLeft = applyTone ? visual(nextShape, sourceTone) : visual(baseShape, targetTone)
+  const correct = applyTone ? visual(nextShape, targetTone) : visual(nextShape, targetTone)
+  const wrong1 = applyTone ? visual(baseShape, targetTone) : visual(baseShape, sourceTone)
+  const wrong2 = applyTone ? visual(nextShape, sourceTone) : visual(shapes[(seed + 4) % shapes.length], targetTone)
+  const result = withAnswer(
+    [option('correct', [correct]), option('wrong-1', [wrong1]), option('wrong-2', [wrong2])],
+    0,
+    seed,
+  )
+
+  return makeQuestion(1100 + seed, {
+    age,
+    template: 'choice',
+    skill: '矩阵补缺',
+    prompt: '上面怎么变，下面也这样变，问号处是什么？',
+    scene: [
+      topLeft,
+      topRight,
+      visual('pill', 'ink', false, '→'),
+      bottomLeft,
+      visual('pill', 'ink', false, '?'),
+    ],
+    answerId: result.answerId,
+    options: result.options,
+    success: applyTone ? '规则是换颜色，形状保持不变。' : '规则是换形状，颜色保持不变。',
+    retry: '先看上面两个图形哪里变了，再把同样的变化用到下面。',
+    tags: ['逻辑', '规律', '矩阵', applyTone ? '颜色' : '形状'],
+    difficulty: 3,
+  })
+}
+
+function sumQuestion(age: AgeKey, seed: number): Question {
+  const leftCount = 1 + (seed % 3)
+  const rightCount = 1 + ((seed + 1) % 3)
+  const total = leftCount + rightCount
+  const tone = tones[(seed + 2) % tones.length]
+  const shape = shapes[seed % shapes.length]
+  const result = withAnswer(
+    [
+      { id: 'correct', text: `${total} 个` },
+      { id: 'wrong-1', text: `${Math.max(1, total - 1)} 个` },
+      { id: 'wrong-2', text: `${total + 1} 个` },
+    ],
+    0,
+    seed,
+  )
+
+  return makeQuestion(1200 + seed, {
+    age,
+    template: 'choice',
+    skill: '数量合成',
+    prompt: '两边合起来一共有几个？',
+    scene: [
+      ...Array.from({ length: leftCount }, () => visual(shape, tone, true)),
+      visual('pill', 'ink', false, '+'),
+      ...Array.from({ length: rightCount }, () => visual(shape, tone, true)),
+    ],
+    answerId: result.answerId,
+    options: result.options,
+    success: `${leftCount} 个加 ${rightCount} 个，一共 ${total} 个。`,
+    retry: '先数左边，再接着数右边。',
+    tags: ['数量', '合成', '逻辑'],
     difficulty: 3,
   })
 }
@@ -551,9 +717,9 @@ function buildAge4(): Question[] {
   return [
     ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age4', index, 3)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => analogyQuestion('age4', index)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => matrixQuestion('age4', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => mazeQuestion('age4', index)),
-    ...Array.from({ length: questionFamilyCount }, (_, index) => connectQuestion('age4', index, 3)),
-    ...Array.from({ length: questionFamilyCount }, (_, index) => leftRightQuestion('age4', index, 3)),
+    ...Array.from({ length: questionFamilyCount }, (_, index) => sumQuestion('age4', index)),
   ]
 }
 

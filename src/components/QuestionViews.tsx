@@ -12,7 +12,55 @@ export type StageGesture = {
   overTarget: boolean
 } | null
 
+const itemEmoji: Record<NonNullable<VisualToken['item']>, string> = {
+  apple: '🍎',
+  banana: '🍌',
+  grapes: '🍇',
+  carrot: '🥕',
+  hat: '🧢',
+  sock: '🧦',
+  scarf: '🧣',
+  cookie: '🍪',
+  car: '🚗',
+  boat: '⛵',
+  plane: '✈️',
+  ball: '⚽',
+  blocks: '🧱',
+  pinwheel: '✦',
+  cat: '🐱',
+  dog: '🐶',
+  bird: '🐦',
+  spoon: '🥄',
+  bowl: '🥣',
+  cup: '🥛',
+  drum: '🥁',
+  bell: '🔔',
+  maraca: '🎵',
+}
+
+function ObjectTile({ token }: { token: VisualToken }) {
+  const className = [
+    'object-tile',
+    `object-${token.item}`,
+    `tone-${token.tone}`,
+    token.small ? 'is-small' : '',
+    token.tone === 'ink' ? 'is-shadow' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <span className={className} aria-label={token.label ?? token.item}>
+      <span className="object-picture">{token.item ? itemEmoji[token.item] : ''}</span>
+    </span>
+  )
+}
+
 export function ShapeTile({ token }: { token: VisualToken }) {
+  if (token.item) {
+    return <ObjectTile token={token} />
+  }
+
   const className = [
     'shape-tile',
     `shape-${token.shape}`,
@@ -33,7 +81,10 @@ export function VisualRow({ tokens, stacked = false }: { tokens: VisualToken[]; 
   return (
     <div className={stacked ? 'visual-row stacked' : 'visual-row'}>
       {tokens.map((token, index) => (
-        <ShapeTile key={`${token.shape}-${token.tone}-${token.label ?? ''}-${index}`} token={token} />
+        <ShapeTile
+          key={`${token.item ?? token.shape}-${token.tone}-${token.label ?? ''}-${index}`}
+          token={token}
+        />
       ))}
     </div>
   )

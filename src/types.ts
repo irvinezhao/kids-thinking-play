@@ -1,6 +1,30 @@
 export type AgeKey = 'age2' | 'age3' | 'age4'
 export type ShapeName = 'circle' | 'square' | 'triangle' | 'diamond' | 'star' | 'pill'
 export type Tone = 'coral' | 'leaf' | 'sky' | 'sun' | 'grape' | 'ink'
+export type ItemName =
+  | 'apple'
+  | 'banana'
+  | 'grapes'
+  | 'carrot'
+  | 'hat'
+  | 'sock'
+  | 'scarf'
+  | 'cookie'
+  | 'car'
+  | 'boat'
+  | 'plane'
+  | 'ball'
+  | 'blocks'
+  | 'pinwheel'
+  | 'cat'
+  | 'dog'
+  | 'bird'
+  | 'spoon'
+  | 'bowl'
+  | 'cup'
+  | 'drum'
+  | 'bell'
+  | 'maraca'
 export type TemplateKind = 'choice' | 'drag' | 'connect' | 'shadow' | 'maze' | 'leftRight'
 export type ReviewStatus = 'approved' | 'needsReview' | 'draft'
 export type Difficulty = 1 | 2 | 3
@@ -8,6 +32,7 @@ export type Difficulty = 1 | 2 | 3
 export type VisualToken = {
   shape: ShapeName
   tone: Tone
+  item?: ItemName
   label?: string
   small?: boolean
 }

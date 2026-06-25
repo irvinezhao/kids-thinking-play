@@ -38,6 +38,7 @@ import type {
   ActivityStore,
   AgeKey,
   Difficulty,
+  ItemName,
   PracticeAttempt,
   ProgressStore,
   Question,
@@ -76,6 +77,31 @@ const validAges: AgeKey[] = ['age2', 'age3', 'age4']
 const validTemplates: TemplateKind[] = ['choice', 'drag', 'connect', 'shadow', 'maze', 'leftRight']
 const validShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star', 'pill']
 const validTones: Tone[] = ['coral', 'leaf', 'sky', 'sun', 'grape', 'ink']
+const validItems: ItemName[] = [
+  'apple',
+  'banana',
+  'grapes',
+  'carrot',
+  'hat',
+  'sock',
+  'scarf',
+  'cookie',
+  'car',
+  'boat',
+  'plane',
+  'ball',
+  'blocks',
+  'pinwheel',
+  'cat',
+  'dog',
+  'bird',
+  'spoon',
+  'bowl',
+  'cup',
+  'drum',
+  'bell',
+  'maraca',
+]
 const urlParams = new URLSearchParams(window.location.search)
 const isTestFastMode = urlParams.get('testFast') === '1'
 
@@ -302,6 +328,7 @@ function normalizeVisual(input: unknown): VisualToken | null {
   return {
     shape: item.shape as ShapeName,
     tone: item.tone as Tone,
+    item: validItems.includes(item.item as ItemName) ? (item.item as ItemName) : undefined,
     label: typeof item.label === 'string' ? item.label : undefined,
     small: Boolean(item.small),
   }
