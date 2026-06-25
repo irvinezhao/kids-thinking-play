@@ -113,8 +113,6 @@ const autoAdvanceDelayMs = isTestFastMode ? 120 : 2000
 const shouldPlayFeedbackAudio = !isTestFastMode
 const correctPraise = '对啦，你真棒！'
 const retryPraise = '再想想吧～'
-const spokenCorrectPraise = '对啦，你真棒'
-const spokenRetryPraise = '再想想吧'
 const fireworkBursts = [
   { x: -160, y: -118, delay: 0 },
   { x: 164, y: -104, delay: 90 },
@@ -178,58 +176,73 @@ function formatDuration(seconds: number) {
   return `${Math.round(seconds / 60)} 分钟`
 }
 
-function playBellTone(
+function playToyTone(
   frequency: number,
   startAt: number,
   duration: number,
   context: AudioContext,
   output: AudioNode,
   volume = 0.18,
+  detune = 0,
 ) {
   const main = context.createOscillator()
-  const shimmer = context.createOscillator()
+  const softOvertone = context.createOscillator()
   const gain = context.createGain()
+  const toneFilter = context.createBiquadFilter()
 
   main.type = 'sine'
-  shimmer.type = 'triangle'
+  softOvertone.type = 'sine'
   main.frequency.setValueAtTime(frequency, startAt)
-  shimmer.frequency.setValueAtTime(frequency * 2.01, startAt)
-  shimmer.detune.setValueAtTime(5, startAt)
+  main.detune.setValueAtTime(detune, startAt)
+  softOvertone.frequency.setValueAtTime(frequency * 2, startAt)
+  softOvertone.detune.setValueAtTime(detune - 7, startAt)
+  toneFilter.type = 'lowpass'
+  toneFilter.frequency.setValueAtTime(3200, startAt)
+  toneFilter.frequency.exponentialRampToValueAtTime(1800, startAt + duration)
+  toneFilter.Q.value = 0.65
 
   gain.gain.setValueAtTime(0.0001, startAt)
-  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018)
-  gain.gain.exponentialRampToValueAtTime(volume * 0.42, startAt + duration * 0.42)
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.012)
+  gain.gain.exponentialRampToValueAtTime(volume * 0.26, startAt + duration * 0.34)
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
 
-  main.connect(gain)
-  shimmer.connect(gain)
+  main.connect(toneFilter)
+  softOvertone.connect(toneFilter)
+  toneFilter.connect(gain)
   gain.connect(output)
   main.start(startAt)
-  shimmer.start(startAt)
+  softOvertone.start(startAt)
   main.stop(startAt + duration + 0.04)
-  shimmer.stop(startAt + duration + 0.04)
+  softOvertone.stop(startAt + duration + 0.04)
 }
 
-function playSweep(
-  startFrequency: number,
-  endFrequency: number,
+function playSoftTap(
   startAt: number,
-  duration: number,
   context: AudioContext,
   output: AudioNode,
+  volume = 0.04,
 ) {
-  const oscillator = context.createOscillator()
+  const noiseLength = Math.max(1, Math.floor(context.sampleRate * 0.045))
+  const buffer = context.createBuffer(1, noiseLength, context.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let index = 0; index < noiseLength; index += 1) {
+    data[index] = (Math.random() * 2 - 1) * (1 - index / noiseLength)
+  }
+  const source = context.createBufferSource()
+  const filter = context.createBiquadFilter()
   const gain = context.createGain()
-  oscillator.type = 'sine'
-  oscillator.frequency.setValueAtTime(startFrequency, startAt)
-  oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startAt + duration)
+  source.buffer = buffer
+  filter.type = 'bandpass'
+  filter.frequency.value = 950
+  filter.Q.value = 0.8
   gain.gain.setValueAtTime(0.0001, startAt)
-  gain.gain.exponentialRampToValueAtTime(0.1, startAt + 0.03)
-  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
-  oscillator.connect(gain)
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.008)
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.09)
+  source.connect(filter)
+  filter.connect(gain)
   gain.connect(output)
-  oscillator.start(startAt)
-  oscillator.stop(startAt + duration + 0.03)
+  source.start(startAt)
+  source.stop(startAt + 0.1)
 }
 
 function playFeedbackSound(correct: boolean) {
@@ -243,13 +256,13 @@ function playFeedbackSound(correct: boolean) {
     const output = context.createGain()
     const filter = context.createBiquadFilter()
     const compressor = context.createDynamicsCompressor()
-    output.gain.value = correct ? 0.62 : 0.42
+    output.gain.value = correct ? 0.46 : 0.34
     filter.type = 'lowpass'
-    filter.frequency.value = correct ? 5200 : 3600
-    filter.Q.value = 0.55
-    compressor.threshold.value = -22
-    compressor.knee.value = 18
-    compressor.ratio.value = 6
+    filter.frequency.value = correct ? 4300 : 3000
+    filter.Q.value = 0.45
+    compressor.threshold.value = -24
+    compressor.knee.value = 20
+    compressor.ratio.value = 4
     compressor.attack.value = 0.01
     compressor.release.value = 0.2
     output.connect(filter)
@@ -263,61 +276,35 @@ function playFeedbackSound(correct: boolean) {
     const now = context.currentTime + 0.018
     const melody = correct
       ? [
-          { frequency: 659.25, offset: 0, duration: 0.16, volume: 0.15 },
-          { frequency: 783.99, offset: 0.08, duration: 0.18, volume: 0.17 },
-          { frequency: 987.77, offset: 0.17, duration: 0.19, volume: 0.16 },
-          { frequency: 1318.51, offset: 0.28, duration: 0.24, volume: 0.13 },
+          { frequency: 523.25, offset: 0, duration: 0.24, volume: 0.11, detune: -3 },
+          { frequency: 659.25, offset: 0.07, duration: 0.25, volume: 0.12, detune: 4 },
+          { frequency: 783.99, offset: 0.16, duration: 0.28, volume: 0.12, detune: -2 },
+          { frequency: 1046.5, offset: 0.29, duration: 0.32, volume: 0.09, detune: 5 },
         ]
       : [
-          { frequency: 493.88, offset: 0, duration: 0.18, volume: 0.1 },
-          { frequency: 587.33, offset: 0.14, duration: 0.2, volume: 0.11 },
-          { frequency: 659.25, offset: 0.28, duration: 0.22, volume: 0.09 },
+          { frequency: 392, offset: 0, duration: 0.22, volume: 0.08, detune: -4 },
+          { frequency: 493.88, offset: 0.12, duration: 0.24, volume: 0.09, detune: 3 },
+          { frequency: 587.33, offset: 0.26, duration: 0.28, volume: 0.075, detune: -2 },
         ]
 
     melody.forEach((note) =>
-      playBellTone(note.frequency, now + note.offset, note.duration, context, output, note.volume),
+      playToyTone(note.frequency, now + note.offset, note.duration, context, output, note.volume, note.detune),
     )
     if (correct) {
-      playSweep(880, 1760, now + 0.16, 0.34, context, output)
-      playBellTone(1567.98, now + 0.38, 0.2, context, output, 0.08)
+      playSoftTap(now + 0.02, context, output, 0.035)
+      playSoftTap(now + 0.24, context, output, 0.026)
+      playToyTone(1318.51, now + 0.43, 0.26, context, output, 0.065, -6)
+    } else {
+      playSoftTap(now + 0.01, context, output, 0.018)
     }
-    window.setTimeout(() => void context.close(), correct ? 980 : 820)
+    window.setTimeout(() => void context.close(), correct ? 900 : 720)
   } catch {
     // Audio feedback is a nicety; browsers can block it in quiet mode or tests.
   }
 }
 
-function voiceQualityScore(voice: SpeechSynthesisVoice) {
-  const signature = `${voice.lang} ${voice.name}`
-  let score = /zh|Chinese|Mandarin|中文|普通话/i.test(signature) ? 8 : 0
-  if (/Google|Microsoft|Tingting|Meijia|Sinji|Xiaoxiao|Yunxi|Premium|Natural/i.test(signature)) {
-    score += 4
-  }
-  if (/zh-CN|cmn-Hans|Mandarin/i.test(signature)) score += 2
-  if (voice.localService) score += 1
-  return score
-}
-
-function speakFeedback(correct: boolean) {
-  if (!('speechSynthesis' in window)) return
-  try {
-    const utterance = new SpeechSynthesisUtterance(correct ? spokenCorrectPraise : spokenRetryPraise)
-    const voices = window.speechSynthesis.getVoices().sort((a, b) => voiceQualityScore(b) - voiceQualityScore(a))
-    utterance.voice = voices.find((voice) => voiceQualityScore(voice) > 0) ?? null
-    utterance.lang = 'zh-CN'
-    utterance.rate = correct ? 1.02 : 0.96
-    utterance.pitch = correct ? 1.16 : 1.02
-    utterance.volume = 0.96
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(utterance)
-  } catch {
-    // Speech synthesis availability varies by browser and device.
-  }
-}
-
 function playAnswerFeedback(correct: boolean) {
   playFeedbackSound(correct)
-  window.setTimeout(() => speakFeedback(correct), correct ? 180 : 130)
 }
 
 function normalizeVisual(input: unknown): VisualToken | null {
@@ -544,9 +531,6 @@ function App() {
 
   useEffect(() => {
     window.localStorage.setItem(soundStorageKey, JSON.stringify(soundEnabled))
-    if (!soundEnabled && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
   }, [soundEnabled])
 
   function startTrack(age: AgeKey) {
@@ -1310,7 +1294,7 @@ function App() {
             </div>
             <button className="feedback-replay" type="button" onClick={() => replayFeedback(answeredCorrectly)}>
               {soundEnabled ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
-              {soundEnabled ? '再听一遍' : '打开声音'}
+              {soundEnabled ? '再播一次' : '打开声音'}
             </button>
             <div className="auto-hint" aria-hidden="true">
               <span />
