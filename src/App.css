@@ -176,7 +176,7 @@
 .small-tool-button {
   min-height: 44px;
   padding: 0 14px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -221,7 +221,7 @@
 .brand-mark {
   width: 50px;
   height: 50px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   color: #2f251f;
   background: var(--sun);
@@ -289,7 +289,7 @@
 
 .mini-badges span {
   padding: 10px 14px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -311,7 +311,7 @@
   bottom: 8px;
   width: 190px;
   height: 72px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px 999px 18px 18px;
   background:
     radial-gradient(circle at 30% 48%, var(--coral) 0 9px, transparent 10px),
@@ -327,7 +327,7 @@
   bottom: -15px;
   left: 22px;
   height: 18px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-top: 0;
   border-radius: 0 0 999px 999px;
   background: var(--sun-soft);
@@ -374,7 +374,7 @@
   bottom: 0;
   width: 26px;
   height: 20px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px 999px 8px 8px;
   background: var(--mint);
   box-shadow: 0 4px 0 var(--ink-soft);
@@ -416,11 +416,11 @@
   position: relative;
   min-height: 196px;
   padding: 18px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   color: var(--text-main);
   background: var(--paper);
-  box-shadow: 0 8px 0 var(--ink-soft);
+  box-shadow: 0 7px 0 var(--ink-soft);
   cursor: pointer;
   text-align: left;
   display: flex;
@@ -462,7 +462,7 @@
   right: 16px;
   bottom: 16px;
   padding: 6px 12px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -504,32 +504,35 @@
 
 .tone-border-coral {
   color: var(--coral);
-  background: var(--coral-soft);
+  background:
+    linear-gradient(180deg, var(--coral-card-top), var(--coral-soft));
 }
 
 .tone-border-leaf {
   color: var(--leaf);
-  background: var(--mint);
+  background:
+    linear-gradient(180deg, var(--leaf-card-top), var(--mint));
 }
 
 .tone-border-sky {
   color: var(--sky);
-  background: var(--sky-soft);
+  background:
+    linear-gradient(180deg, var(--sky-card-top), var(--sky-soft));
 }
 
 :root[data-theme='night'] .tone-border-coral {
   color: #ff8c78;
-  background: #6b3a34;
+  background: linear-gradient(180deg, var(--coral-card-top), var(--coral-soft));
 }
 
 :root[data-theme='night'] .tone-border-leaf {
   color: #7ed993;
-  background: #28583e;
+  background: linear-gradient(180deg, var(--leaf-card-top), var(--mint));
 }
 
 :root[data-theme='night'] .tone-border-sky {
   color: #7ab8f3;
-  background: #24486e;
+  background: linear-gradient(180deg, var(--sky-card-top), var(--sky-soft));
 }
 
 .age-big {
@@ -585,7 +588,7 @@
 .preview-stage {
   position: relative;
   min-height: 118px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   background: var(--sky-soft);
   box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
@@ -599,7 +602,7 @@
   top: 16px;
   width: 58px;
   height: 42px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--paper);
   box-shadow: 0 5px 0 var(--ink-soft);
@@ -635,7 +638,7 @@
 
 .preview-note {
   padding: 14px 16px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   background: var(--paper);
   box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
@@ -665,7 +668,7 @@
 .icon-button {
   width: 46px;
   height: 46px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -689,7 +692,7 @@
   flex: 1;
   min-width: 0;
   padding: 12px 16px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -710,7 +713,7 @@
   width: min(1120px, calc(100% - 40px));
   height: 18px;
   margin: 0 auto;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--paper);
   overflow: hidden;
@@ -740,7 +743,7 @@
   width: fit-content;
   margin-bottom: 12px;
   padding: 8px 12px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--sun-soft);
@@ -762,10 +765,10 @@
   min-height: 222px;
   margin-top: 18px;
   padding: 20px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   background:
     linear-gradient(180deg, var(--surface-strong), var(--paper));
-  box-shadow: 0 9px 0 var(--ink-soft);
+  box-shadow: 0 7px 0 var(--ink-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -959,7 +962,7 @@
   position: relative;
   width: 92px;
   height: 92px;
-  border: 3px solid var(--paper);
+  border: 2px solid var(--paper);
   border-radius: 10px;
   color: var(--text-strong);
   background: var(--surface-strong);
@@ -1001,7 +1004,7 @@
 .object-part {
   position: absolute;
   display: none;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   background: var(--object-main, var(--coral));
   box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.12);
 }
@@ -1009,7 +1012,7 @@
 .object-tile.is-small {
   width: 62px;
   height: 62px;
-  border-width: 3px;
+  border-width: 2px;
   border-radius: 8px;
   box-shadow: 0 5px 0 var(--ink-soft), inset 0 -5px 0 rgba(0, 0, 0, 0.08);
 }
@@ -1964,12 +1967,12 @@
 .option-button {
   min-height: 122px;
   padding: 14px 12px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   color: var(--text-strong);
   background:
     linear-gradient(180deg, var(--surface-strong), var(--paper));
-  box-shadow: 0 7px 0 var(--ink-soft);
+  box-shadow: 0 6px 0 var(--ink-soft);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -2124,8 +2127,8 @@
   width: min(420px, calc(100% - 40px));
   margin: 0;
   padding: 18px;
-  border: 3px solid var(--ink);
-  box-shadow: 0 7px 0 var(--ink-soft);
+  border: 2px solid var(--ink);
+  box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -2193,7 +2196,7 @@
   width: fit-content;
   margin: -2px auto 0;
   padding: 0 13px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2229,7 +2232,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   transform: translate(-50%, -50%);
 }
@@ -2697,7 +2700,7 @@
 .drop-zone {
   position: relative;
   overflow: hidden;
-  border: 3px dashed var(--ink);
+  border: 2px dashed var(--ink);
   border-radius: 8px;
   background: var(--sun-soft);
   flex-direction: column;
@@ -2713,7 +2716,7 @@
 .drop-zone::after {
   position: absolute;
   inset: 14px;
-  border: 3px solid rgba(51, 40, 32, 0.14);
+  border: 2px solid rgba(51, 40, 32, 0.14);
   border-radius: 8px;
   content: '';
   opacity: 0;
@@ -2747,7 +2750,7 @@
 
 .drop-label {
   padding: 9px 14px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2774,7 +2777,7 @@
   min-width: 132px;
   min-height: 142px;
   padding: 14px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--sky-soft);
   display: grid;
@@ -2843,7 +2846,7 @@
 .connect-placeholder {
   width: 82px;
   height: 82px;
-  border: 3px dashed var(--ink);
+  border: 2px dashed var(--ink);
   border-radius: 8px;
   background: var(--paper);
 }
@@ -2858,7 +2861,7 @@
   min-width: 126px;
   min-height: 152px;
   padding: 14px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--mint);
   display: grid;
@@ -2889,7 +2892,7 @@
 .maze-cell {
   position: relative;
   overflow: hidden;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--paper);
   cursor: pointer;
@@ -2973,7 +2976,7 @@
 .maze-cell em {
   width: 28px;
   height: 28px;
-  border: 3px solid var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--sun);
   display: grid;
