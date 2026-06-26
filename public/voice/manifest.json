@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "baseUrl": "./audio/",
+  "entries": {},
+  "prompts": {},
+  "cloudTtsUrlTemplate": ""
+}

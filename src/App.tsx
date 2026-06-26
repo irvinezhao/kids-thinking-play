@@ -72,6 +72,13 @@ type ActiveOptionGesture = {
   overTarget: boolean
   hasMoved: boolean
 }
+type PromptVoiceManifest = {
+  version?: number
+  baseUrl?: string
+  cloudTtsUrlTemplate?: string
+  entries?: Record<string, string>
+  prompts?: Record<string, string>
+}
 
 const progressStorageKey = 'kids-thinking-play-progress'
 const activityStorageKey = 'kids-thinking-play-activity'
@@ -139,6 +146,7 @@ const emptyActivity: ActivityStore = {
 }
 const autoAdvanceDelayMs = isTestFastMode ? 120 : 2000
 const shouldPlayFeedbackAudio = !isTestFastMode
+const promptVoiceManifestFile = 'voice/manifest.json'
 const correctPraise = '对啦，你真棒！'
 const retryPraise = '再想想吧～'
 const fireworkBursts = [
@@ -353,6 +361,31 @@ function playFeedbackSound(correct: boolean) {
 
 function playAnswerFeedback(correct: boolean) {
   playFeedbackSound(correct)
+}
+
+function getPromptVoiceManifestUrl() {
+  return new URL(promptVoiceManifestFile, window.location.href).toString()
+}
+
+function applyTtsUrlTemplate(template: string, question: Question) {
+  const replacements: Record<string, string> = {
+    id: question.id,
+    text: question.prompt,
+    prompt: question.prompt,
+    age: question.age,
+    skill: question.skill,
+  }
+  return template.replace(/\{(id|text|prompt|age|skill)\}/g, (_, key: string) =>
+    encodeURIComponent(replacements[key] ?? ''),
+  )
+}
+
+function resolvePromptAudioUrl(question: Question, manifest: PromptVoiceManifest | null, manifestBaseUrl: string) {
+  if (!manifest) return null
+  const directUrl = manifest.entries?.[question.id] ?? manifest.prompts?.[question.prompt]
+  if (directUrl) return new URL(directUrl, manifestBaseUrl).toString()
+  if (manifest.cloudTtsUrlTemplate) return applyTtsUrlTemplate(manifest.cloudTtsUrlTemplate, question)
+  return null
 }
 
 function canUseSpeechSynthesis() {
@@ -577,6 +610,9 @@ function App() {
   const gesturePointerIdRef = useRef<number | null>(null)
   const suppressOptionClickRef = useRef(false)
   const questionSpeechTimerRef = useRef<number | null>(null)
+  const questionAudioRef = useRef<HTMLAudioElement | null>(null)
+  const promptVoiceManifestRef = useRef<PromptVoiceManifest | null>(null)
+  const promptVoiceManifestBaseRef = useRef('')
   const speechVoicesRef = useRef<SpeechSynthesisVoice[]>([])
 
   const questionPool = useMemo(() => [...generatedQuestions, ...importedQuestions], [importedQuestions])
@@ -618,6 +654,29 @@ function App() {
   }, [themeMode])
 
   useEffect(() => {
+    let cancelled = false
+    const manifestUrl = getPromptVoiceManifestUrl()
+    promptVoiceManifestBaseRef.current = manifestUrl
+
+    fetch(manifestUrl, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((manifest: PromptVoiceManifest | null) => {
+        if (cancelled || !manifest || typeof manifest !== 'object') return
+        promptVoiceManifestRef.current = manifest
+        promptVoiceManifestBaseRef.current = manifest.baseUrl
+          ? new URL(manifest.baseUrl, manifestUrl).toString()
+          : manifestUrl
+      })
+      .catch(() => {
+        // Prompt voice packs are optional; system speech remains the fallback.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     if (!canUseSpeechSynthesis()) return undefined
 
     const refreshVoices = () => {
@@ -638,17 +697,21 @@ function App() {
       window.clearTimeout(questionSpeechTimerRef.current)
       questionSpeechTimerRef.current = null
     }
+    if (questionAudioRef.current) {
+      questionAudioRef.current.pause()
+      questionAudioRef.current.currentTime = 0
+      questionAudioRef.current = null
+    }
     if (canUseSpeechSynthesis()) {
       window.speechSynthesis.cancel()
     }
   }, [])
 
-  const speakQuestionPrompt = useCallback(
+  const speakQuestionWithSystemVoice = useCallback(
     (question: Question | null) => {
       if (!question || !soundEnabled || !shouldPlayFeedbackAudio || !canUseSpeechSynthesis()) return
 
       try {
-        stopQuestionSpeech()
         const voices = speechVoicesRef.current.length
           ? speechVoicesRef.current
           : window.speechSynthesis.getVoices()
@@ -666,7 +729,40 @@ function App() {
         // Some embedded browsers expose speech APIs but block playback.
       }
     },
-    [soundEnabled, stopQuestionSpeech],
+    [soundEnabled],
+  )
+
+  const speakQuestionPrompt = useCallback(
+    (question: Question | null) => {
+      if (!question || !soundEnabled || !shouldPlayFeedbackAudio) return
+
+      stopQuestionSpeech()
+      const audioUrl = resolvePromptAudioUrl(
+        question,
+        promptVoiceManifestRef.current,
+        promptVoiceManifestBaseRef.current || getPromptVoiceManifestUrl(),
+      )
+
+      if (audioUrl) {
+        try {
+          const audio = new Audio(audioUrl)
+          audio.preload = 'auto'
+          questionAudioRef.current = audio
+          void audio.play().catch(() => {
+            if (questionAudioRef.current === audio) {
+              questionAudioRef.current = null
+              speakQuestionWithSystemVoice(question)
+            }
+          })
+          return
+        } catch {
+          // Fall through to system speech.
+        }
+      }
+
+      speakQuestionWithSystemVoice(question)
+    },
+    [soundEnabled, speakQuestionWithSystemVoice, stopQuestionSpeech],
   )
 
   useEffect(() => {

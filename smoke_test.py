@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from playwright.sync_api import Page, expect, sync_playwright
 
 
@@ -50,10 +52,24 @@ def answer_current_question(page: Page) -> None:
 
 
 def assert_question_voice_prompt(page: Page) -> None:
+    page.route(
+        "**/voice/manifest.json",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"version":1,"cloudTtsUrlTemplate":"/tts/question.mp3?text={text}&id={id}"}',
+        ),
+    )
+    page.route("**/tts/question.mp3**", lambda route: route.fulfill(status=200, body=""))
     page.add_init_script(
         """
         (() => {
           window.__spokenPrompts = [];
+          window.__playedPromptAudio = [];
+          HTMLMediaElement.prototype.play = function play() {
+            window.__playedPromptAudio.push(this.currentSrc || this.src);
+            return Promise.resolve();
+          };
           window.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(text) {
             this.text = text;
             this.lang = '';
@@ -93,14 +109,13 @@ def assert_question_voice_prompt(page: Page) -> None:
     page.wait_for_load_state("networkidle")
     page.get_by_role("button", name="开始 3-4 岁 练习").click()
     expect(page.locator(".question-area h2")).to_be_visible()
-    page.wait_for_timeout(700)
+    page.wait_for_function("window.__playedPromptAudio.length > 0")
     visible_prompt = page.locator(".question-area h2").inner_text()
+    played_audio = page.evaluate("window.__playedPromptAudio")
     spoken_prompts = page.evaluate("window.__spokenPrompts")
-    assert spoken_prompts, "Question prompt should be sent to speech synthesis"
-    assert spoken_prompts[-1]["text"] == visible_prompt, "Speech text should match the visible question"
-    assert spoken_prompts[-1]["lang"] == "zh-CN", "Speech should use Mandarin Chinese"
-    assert spoken_prompts[-1]["voiceName"] == "Xiaoxiao", "Speech should prefer an available Mandarin voice"
-    assert 0.8 <= spoken_prompts[-1]["rate"] <= 0.9, "Speech rate should be child-friendly"
+    assert played_audio, "Question prompt should prefer cloud or recorded voice audio"
+    assert quote(visible_prompt, safe="") in played_audio[-1], "Voice audio URL should include the visible question"
+    assert not spoken_prompts, "System speech should only be a fallback when voice audio is unavailable"
 
 
 def run() -> None:

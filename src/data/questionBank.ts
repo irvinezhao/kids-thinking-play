@@ -1207,14 +1207,904 @@ function curatedAge4Questions(): Question[] {
   ]
 }
 
-const ageQuestionTarget = questionFamilyCount * 5
+const ageQuestionTarget = 150
+const reviewedQuestionTarget = ageQuestionTarget
+const fruitItems: ItemName[] = ['apple', 'banana', 'grapes', 'orange', 'strawberry', 'pear']
+const clothingItems: ItemName[] = ['hat', 'sock', 'scarf', 'shirt', 'pants', 'shoe']
+const vehicleItems: ItemName[] = ['car', 'boat', 'plane']
+const toyItems: ItemName[] = ['blocks', 'ball', 'pinwheel']
+const animalItems: ItemName[] = ['cat', 'dog', 'bird']
+const tablewareItems: ItemName[] = ['spoon', 'bowl', 'cup']
+const instrumentItems: ItemName[] = ['drum', 'bell', 'maraca']
+const foodItems: ItemName[] = [...fruitItems, 'carrot', 'cookie']
+const allReviewedItems: ItemName[] = [
+  ...fruitItems,
+  ...clothingItems,
+  ...vehicleItems,
+  ...toyItems,
+  ...animalItems,
+  ...tablewareItems,
+  ...instrumentItems,
+  'carrot',
+  'cookie',
+]
+const reviewedCategories = [
+  { label: '水果', items: fruitItems, outside: clothingItems, container: '果篮', tone: 'leaf' as Tone },
+  { label: '衣物', items: clothingItems, outside: fruitItems, container: '衣柜', tone: 'sky' as Tone },
+  { label: '交通工具', items: vehicleItems, outside: foodItems, container: '停车场', tone: 'coral' as Tone },
+  { label: '玩具', items: toyItems, outside: tablewareItems, container: '玩具箱', tone: 'sun' as Tone },
+  { label: '动物', items: animalItems, outside: clothingItems, container: '动物园', tone: 'leaf' as Tone },
+  { label: '餐具', items: tablewareItems, outside: vehicleItems, container: '餐桌', tone: 'sky' as Tone },
+  { label: '乐器', items: instrumentItems, outside: fruitItems, container: '音乐盒', tone: 'sun' as Tone },
+] as const
+const useGroups = [
+  { cue: '能吃', label: '能吃的东西', items: foodItems, outside: [...vehicleItems, ...clothingItems] },
+  { cue: '能穿戴', label: '能穿戴的东西', items: clothingItems, outside: [...foodItems, ...vehicleItems] },
+  { cue: '会飞', label: '会飞的东西', items: ['plane', 'bird'] as ItemName[], outside: ['boat', 'cup', 'shoe', 'dog'] as ItemName[] },
+  { cue: '能发出声音', label: '能发出声音的乐器', items: instrumentItems, outside: ['cup', 'shoe', 'pear', 'boat'] as ItemName[] },
+  { cue: '能在路上跑', label: '交通工具', items: vehicleItems, outside: ['apple', 'sock', 'drum', 'bowl'] as ItemName[] },
+] as const
+const reviewedShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'pill']
+const shapeItemGroups: Record<ShapeName, ItemName[]> = allReviewedItems.reduce(
+  (groups, item) => {
+    groups[itemShapes[item]].push(item)
+    return groups
+  },
+  {
+    circle: [],
+    square: [],
+    triangle: [],
+    diamond: [],
+    star: [],
+    pill: [],
+  } as Record<ShapeName, ItemName[]>,
+)
+
+function pickFrom<T>(items: readonly T[], seed: number) {
+  return items[((seed % items.length) + items.length) % items.length]
+}
+
+function itemChoice(id: string, item: ItemName, small = false): Option {
+  return option(id, [itemVisual(item, small)], itemNames[item])
+}
+
+function shadowChoice(id: string, item: ItemName): Option {
+  return option(id, [{ ...itemVisual(item), tone: 'ink' }], `${itemNames[item]}影子`)
+}
+
+function pickDistinctItems(seed: number, avoid: ItemName[], count: number, source: readonly ItemName[] = allReviewedItems) {
+  const picked: ItemName[] = []
+  let cursor = seed
+  while (picked.length < count && cursor < seed + source.length * 3) {
+    const item = pickFrom(source, cursor)
+    if (!avoid.includes(item) && !picked.includes(item)) picked.push(item)
+    cursor += 1
+  }
+  return picked
+}
+
+function countOptions(count: number, seed: number) {
+  const lower = Math.max(1, count - 1)
+  const higher = count + 1
+  return withAnswer(
+    [
+      { id: 'correct', text: `${count} 个` },
+      { id: 'wrong-1', text: `${lower} 个` },
+      { id: 'wrong-2', text: `${higher} 个` },
+    ],
+    0,
+    seed,
+  )
+}
+
+function age2ReviewedQuestion(index: number): Question {
+  const seed = 3000 + index
+  const family = index % 12
+  const item = pickFrom(allReviewedItems, seed)
+  const category = pickFrom(reviewedCategories, seed)
+
+  if (family === 0) {
+    const wrongs = pickDistinctItems(seed + 1, [item], 2)
+    const result = withAnswer([itemChoice('correct', item), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找相同',
+      prompt: `哪一个和${itemNames[item]}一样？`,
+      scene: [itemVisual(item)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `找到了同样的${itemNames[item]}。`,
+      retry: '先看它的样子，再找一样的。',
+      tags: ['精选', '观察力', '生活物品'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 1) {
+    const count = 1 + (seed % 4)
+    const result = countOptions(count, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '数一数',
+      prompt: `这里有几个${itemNames[item]}？`,
+      scene: Array.from({ length: count }, () => itemVisual(item, true)),
+      answerId: result.answerId,
+      options: result.options,
+      success: `一共有 ${count} 个${itemNames[item]}。`,
+      retry: '用手指点着，一个一个数。',
+      tags: ['精选', '数量', '数数'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 2) {
+    const leftCount = 1 + (seed % 2)
+    const rightCount = leftCount + 1
+    const result = withAnswer(
+      [
+        option('wrong', Array.from({ length: leftCount }, () => itemVisual(item, true)), `${leftCount} 个`),
+        option('correct', Array.from({ length: rightCount }, () => itemVisual(item, true)), `${rightCount} 个`),
+      ],
+      1,
+      seed,
+    )
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '比多少',
+      prompt: `哪一组${itemNames[item]}更多？`,
+      scene: [visual('pill', 'leaf', false, '多')],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${rightCount} 个比 ${leftCount} 个更多。`,
+      retry: '先数一组，再数另一组。',
+      tags: ['精选', '数量', '比较'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 3) {
+    const correct = pickFrom(category.items, seed)
+    const wrongs = pickDistinctItems(seed + 2, [correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'drag',
+      skill: '拖拽分类',
+      prompt: `把${category.label}放进${category.container}`,
+      scene: [visual('pill', category.tone, false, category.container), itemVisual(pickFrom(category.items, seed + 1), true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}属于${category.label}。`,
+      retry: `${category.container}里要放${category.label}。`,
+      tags: ['精选', '分类', category.label, '手眼协调'],
+      difficulty: 1,
+      meta: { dropLabel: category.container },
+    })
+  }
+
+  if (family === 4) {
+    const wrongs = pickDistinctItems(seed + 3, [item], 2)
+    const result = withAnswer([shadowChoice('correct', item), shadowChoice('wrong-1', wrongs[0]), shadowChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: `哪一个是${itemNames[item]}的影子？`,
+      scene: [itemVisual(item)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[item]}的影子轮廓是一样的。`,
+      retry: '影子只看外面的样子。',
+      tags: ['精选', '观察力', '空间'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 5) {
+    const shape = pickFrom(reviewedShapes, seed)
+    const correct = pickFrom(shapeItemGroups[shape], seed)
+    const wrongs = pickDistinctItems(seed + 4, [correct], 2, allReviewedItems.filter((candidate) => itemShapes[candidate] !== shape))
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找形状',
+      prompt: `哪一个像${shapeNames[shape]}？`,
+      scene: [visual(shape, itemTones[correct], false, shapeNames[shape])],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}的外形像${shapeNames[shape]}。`,
+      retry: '先看外面的形状。',
+      tags: ['精选', '形状', '观察力'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 6) {
+    const correct = pickFrom(category.outside, seed)
+    const examples = [pickFrom(category.items, seed + 1), pickFrom(category.items, seed + 2)]
+    const result = withAnswer([itemChoice('wrong-1', examples[0]), itemChoice('wrong-2', examples[1]), itemChoice('correct', correct)], 2, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找不同',
+      prompt: `哪个不能和${itemNames[examples[0]]}、${itemNames[examples[1]]}放进${category.label}小队？`,
+      scene: [visual('pill', category.tone, false, category.label), itemVisual(examples[0], true), itemVisual(examples[1], true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}不属于${category.label}。`,
+      retry: `想一想哪些是${category.label}。`,
+      tags: ['精选', '分类', category.label],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 7) {
+    const useGroup = pickFrom(useGroups, seed)
+    const correct = pickFrom(useGroup.items, seed)
+    const wrongs = pickDistinctItems(seed + 5, [correct], 2, useGroup.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '生活常识',
+      prompt: `哪一个${useGroup.cue}？`,
+      scene: [visual('pill', 'leaf', false, useGroup.cue)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}${useGroup.cue}。`,
+      retry: `找${useGroup.label}。`,
+      tags: ['精选', '常识', '分类'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 8) {
+    const targetTone = itemTones[item]
+    const sameTone = allReviewedItems.filter((candidate) => itemTones[candidate] === targetTone && candidate !== item)
+    const correct = pickFrom(sameTone.length ? sameTone : [item], seed)
+    const wrongs = pickDistinctItems(seed + 6, [correct], 2, allReviewedItems.filter((candidate) => itemTones[candidate] !== targetTone))
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找颜色',
+      prompt: `找一个${toneNames[targetTone]}的东西`,
+      scene: [visual('pill', targetTone, false, toneNames[targetTone]), itemVisual(item, true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}也是${toneNames[targetTone]}。`,
+      retry: '先看颜色，不用管它是什么。',
+      tags: ['精选', '颜色', '观察力'],
+      difficulty: 1,
+    })
+  }
+
+  if (family === 9) {
+    const left = item
+    const center = pickFrom(animalItems, seed + 1)
+    const right = pickFrom(pickDistinctItems(seed + 2, [left, center], 1), 0)
+    const answerId = seed % 2 === 0 ? 'a' : 'b'
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'leftRight',
+      skill: '左右观察',
+      prompt: `${itemNames[answerId === 'a' ? left : right]}在${itemNames[center]}的哪一边？`,
+      scene: [itemVisual(left), itemVisual(center), itemVisual(right)],
+      answerId,
+      options: [
+        { id: 'a', text: '左边' },
+        { id: 'b', text: '右边' },
+      ],
+      success: `它在${answerId === 'a' ? '左边' : '右边'}。`,
+      retry: `先找到中间的${itemNames[center]}。`,
+      tags: ['精选', '空间', '左右'],
+      difficulty: 1,
+      meta: { left: itemVisual(left), target: itemVisual(answerId === 'a' ? left : right), right: itemVisual(right), relation: 'side' },
+    })
+  }
+
+  if (family === 10) {
+    const correct = pickFrom(category.items, seed)
+    const wrongs = pickDistinctItems(seed + 7, [correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age2',
+      template: 'choice',
+      skill: '分类',
+      prompt: `哪一个是${category.label}？`,
+      scene: [visual('pill', category.tone, false, category.label)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}是${category.label}。`,
+      retry: `找一个${category.label}。`,
+      tags: ['精选', '分类', category.label],
+      difficulty: 1,
+    })
+  }
+
+  const first = item
+  const second = pickFrom(pickDistinctItems(seed + 8, [first], 1), 0)
+  const result = withAnswer([itemChoice('correct', first), itemChoice('wrong-1', second), itemChoice('wrong-2', pickFrom(pickDistinctItems(seed + 9, [first, second], 1), 0))], 0, seed)
+  return makeQuestion(seed, {
+    age: 'age2',
+    template: 'choice',
+    skill: '简单规律',
+    prompt: `${itemNames[first]}、${itemNames[second]}、${itemNames[first]}，后面是什么？`,
+    scene: [itemVisual(first, true), itemVisual(second, true), itemVisual(first, true), visual('pill', 'ink', false, '?')],
+    answerId: result.answerId,
+    options: result.options,
+    success: `${itemNames[first]}和${itemNames[second]}轮流出现。`,
+    retry: '把前面的物品慢慢念一遍。',
+    tags: ['精选', '规律', '观察力'],
+    difficulty: 1,
+  })
+}
+
+function age3ReviewedQuestion(index: number): Question {
+  const seed = 5000 + index
+  const family = index % 14
+  const category = pickFrom(reviewedCategories, seed)
+  const item = pickFrom(allReviewedItems, seed)
+
+  if (family === 0) {
+    const correct = pickFrom(category.outside, seed)
+    const examples = [pickFrom(category.items, seed + 1), pickFrom(category.items, seed + 2)]
+    const result = withAnswer([itemChoice('wrong-1', examples[0]), itemChoice('wrong-2', examples[1]), itemChoice('correct', correct)], 2, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '分类',
+      prompt: `哪一个不是${category.label}？`,
+      scene: [visual('pill', category.tone, false, category.label), itemVisual(examples[0], true), itemVisual(examples[1], true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}不属于${category.label}。`,
+      retry: `先想一想${category.label}有哪些。`,
+      tags: ['精选', '分类', category.label, '常识'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 1) {
+    const first = pickFrom(category.items, seed)
+    const second = pickFrom(category.items, seed + 1)
+    const third = pickFrom(category.items, seed + 2)
+    const result = withAnswer([itemChoice('correct', third), itemChoice('wrong-1', first), itemChoice('wrong-2', second)], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '规律',
+      prompt: `${itemNames[first]}、${itemNames[second]}、${itemNames[third]}，又是${itemNames[first]}、${itemNames[second]}，后面是什么？`,
+      scene: [itemVisual(first, true), itemVisual(second, true), itemVisual(third, true), itemVisual(first, true), itemVisual(second, true), visual('pill', 'ink', false, '?')],
+      answerId: result.answerId,
+      options: result.options,
+      success: `三个一组重复，后面是${itemNames[third]}。`,
+      retry: '把前三个当成一组，再看第二组缺什么。',
+      tags: ['精选', '规律', category.label, '逻辑'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 2) {
+    const source = pickFrom(category.items, seed)
+    const correct = pickFrom(category.items.filter((candidate) => candidate !== source), seed + 1)
+    const wrongs = pickDistinctItems(seed + 2, [source, correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'connect',
+      skill: '连线配对',
+      prompt: `把和${itemNames[source]}同类的${category.label}连起来`,
+      scene: [itemVisual(source)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[source]}和${itemNames[correct]}都属于${category.label}。`,
+      retry: `找另一个${category.label}。`,
+      tags: ['精选', '配对', '分类', category.label],
+      difficulty: 2,
+      meta: { relation: 'count' },
+    })
+  }
+
+  if (family === 3) {
+    const correct = pickFrom(category.items, seed)
+    const wrongs = pickDistinctItems(seed + 3, [correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'drag',
+      skill: '拖拽分类',
+      prompt: `帮${itemNames[pickFrom(category.items, seed + 1)]}找同类，放进${category.container}`,
+      scene: [visual('pill', category.tone, false, category.container), itemVisual(pickFrom(category.items, seed + 1), true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}属于${category.label}。`,
+      retry: `${category.container}只收${category.label}。`,
+      tags: ['精选', '分类', category.label, '手眼协调'],
+      difficulty: 2,
+      meta: { dropLabel: category.container },
+    })
+  }
+
+  if (family === 4) {
+    const center = pickFrom(animalItems, seed)
+    const left = pickFrom(pickDistinctItems(seed + 1, [center], 1), 0)
+    const right = pickFrom(pickDistinctItems(seed + 2, [center, left], 1), 0)
+    const targetSide = seed % 2 === 0 ? 'a' : 'b'
+    const target = targetSide === 'a' ? left : right
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'leftRight',
+      skill: '左右判断',
+      prompt: `${itemNames[target]}在${itemNames[center]}的哪一边？`,
+      scene: [itemVisual(left), itemVisual(center), itemVisual(right)],
+      answerId: targetSide,
+      options: [
+        { id: 'a', text: '左边' },
+        { id: 'b', text: '右边' },
+      ],
+      success: `${itemNames[target]}在${targetSide === 'a' ? '左边' : '右边'}。`,
+      retry: `先找到中间的${itemNames[center]}。`,
+      tags: ['精选', '空间', '左右', '观察力'],
+      difficulty: 2,
+      meta: { left: itemVisual(left), target: itemVisual(target), right: itemVisual(right), relation: 'side' },
+    })
+  }
+
+  if (family === 5) {
+    const wrongs = pickDistinctItems(seed + 4, [item], 2)
+    const result = withAnswer([shadowChoice('correct', item), shadowChoice('wrong-1', wrongs[0]), shadowChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: `哪一个是${itemNames[item]}的影子？`,
+      scene: [itemVisual(item)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[item]}的影子保留了外形轮廓。`,
+      retry: '不要看颜色，只看外面的形状。',
+      tags: ['精选', '观察力', '空间'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 6) {
+    const useGroup = pickFrom(useGroups, seed)
+    const example = pickFrom(useGroup.items, seed + 1)
+    const correct = pickFrom(useGroup.items, seed)
+    const wrongs = pickDistinctItems(seed + 5, [correct], 2, useGroup.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '生活常识',
+      prompt: `和${itemNames[example]}一样，哪一个${useGroup.cue}？`,
+      scene: [visual('pill', 'leaf', false, useGroup.label), itemVisual(example, true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}${useGroup.cue}。`,
+      retry: `找${useGroup.label}。`,
+      tags: ['精选', '常识', '分类'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 7) {
+    const count = 2 + (seed % 4)
+    const result = countOptions(count, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '数一数',
+      prompt: `数一数有几个${itemNames[item]}？`,
+      scene: Array.from({ length: count }, () => itemVisual(item, true)),
+      answerId: result.answerId,
+      options: result.options,
+      success: `一共有 ${count} 个。`,
+      retry: '从左到右一个一个数。',
+      tags: ['精选', '数量', '数数'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 8) {
+    const leftCount = 2 + (seed % 3)
+    const rightCount = leftCount + 1
+    const result = withAnswer(
+      [
+        option('wrong', Array.from({ length: leftCount }, () => itemVisual(item, true)), `${leftCount} 个`),
+        option('correct', Array.from({ length: rightCount }, () => itemVisual(item, true)), `${rightCount} 个`),
+      ],
+      1,
+      seed,
+    )
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '比多少',
+      prompt: `哪一组${itemNames[item]}更多？`,
+      scene: [visual('pill', 'leaf', false, '更多')],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${rightCount} 个更多。`,
+      retry: '分别数一数两组有几个。',
+      tags: ['精选', '数量', '比较'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 9) {
+    const shape = pickFrom(reviewedShapes, seed)
+    const correct = pickFrom(shapeItemGroups[shape], seed)
+    const wrongs = pickDistinctItems(seed + 6, [correct], 2, allReviewedItems.filter((candidate) => itemShapes[candidate] !== shape))
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '形状观察',
+      prompt: `哪一个外形像${shapeNames[shape]}？`,
+      scene: [visual(shape, itemTones[correct], false, shapeNames[shape])],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}像${shapeNames[shape]}。`,
+      retry: '先看外形，不要被颜色影响。',
+      tags: ['精选', '形状', '观察力'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 10) {
+    const targetTone = pickFrom(tones, seed)
+    const correct = pickFrom(allReviewedItems.filter((candidate) => itemTones[candidate] === targetTone), seed)
+    const wrongs = pickDistinctItems(seed + 7, [correct], 2, allReviewedItems.filter((candidate) => itemTones[candidate] !== targetTone))
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '颜色分类',
+      prompt: `哪一个是${toneNames[targetTone]}的？`,
+      scene: [visual('pill', targetTone, false, toneNames[targetTone])],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}是${toneNames[targetTone]}。`,
+      retry: '只看颜色。',
+      tags: ['精选', '颜色', '分类'],
+      difficulty: 2,
+    })
+  }
+
+  if (family === 11) {
+    const source = pickFrom(useGroups, seed)
+    const correct = pickFrom(source.items, seed + 1)
+    const wrongs = pickDistinctItems(seed + 8, [correct], 2, source.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'connect',
+      skill: '用途配对',
+      prompt: `把和${itemNames[pickFrom(source.items, seed)]}用途相近的连起来`,
+      scene: [itemVisual(pickFrom(source.items, seed))],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}也${source.cue}。`,
+      retry: `找另一个${source.label}。`,
+      tags: ['精选', '配对', '常识'],
+      difficulty: 2,
+      meta: { relation: 'count' },
+    })
+  }
+
+  if (family === 12) {
+    const correct = pickFrom(category.items, seed)
+    const wrongs = pickDistinctItems(seed + 9, [correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age3',
+      template: 'choice',
+      skill: '分类',
+      prompt: `哪个能加入${itemNames[pickFrom(category.items, seed + 1)]}的${category.label}小队？`,
+      scene: [visual('pill', category.tone, false, category.label)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}属于${category.label}。`,
+      retry: `找${category.label}。`,
+      tags: ['精选', '分类', category.label],
+      difficulty: 2,
+    })
+  }
+
+  const first = pickFrom(category.items, seed)
+  const second = pickFrom(category.items, seed + 1)
+  const result = withAnswer([itemChoice('correct', second), itemChoice('wrong-1', first), itemChoice('wrong-2', pickFrom(pickDistinctItems(seed + 10, [first, second], 1), 0))], 0, seed)
+  return makeQuestion(seed, {
+    age: 'age3',
+    template: 'choice',
+    skill: '规律',
+    prompt: `${itemNames[first]}、${itemNames[second]}、${itemNames[first]}，后面是什么？`,
+    scene: [itemVisual(first, true), itemVisual(second, true), itemVisual(first, true), visual('pill', 'ink', false, '?')],
+    answerId: result.answerId,
+    options: result.options,
+    success: `规律是${itemNames[first]}和${itemNames[second]}轮流出现。`,
+    retry: '从头慢慢念一遍。',
+    tags: ['精选', '规律', category.label],
+    difficulty: 2,
+  })
+}
+
+function age4ReviewedQuestion(index: number): Question {
+  const seed = 7000 + index
+  const family = index % 16
+  const category = pickFrom(reviewedCategories, seed)
+  const item = pickFrom(allReviewedItems, seed)
+
+  if (family === 0) {
+    const first = pickFrom(category.items, seed)
+    const second = pickFrom(category.items, seed + 1)
+    const third = pickFrom(category.items, seed + 2)
+    const result = withAnswer([itemChoice('correct', third), itemChoice('wrong-1', first), itemChoice('wrong-2', second)], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '三步规律',
+      prompt: `${itemNames[first]}、${itemNames[second]}、${itemNames[third]}、${itemNames[first]}、${itemNames[second]}，后面是什么？`,
+      scene: [itemVisual(first, true), itemVisual(second, true), itemVisual(third, true), itemVisual(first, true), itemVisual(second, true), visual('pill', 'ink', false, '?')],
+      answerId: result.answerId,
+      options: result.options,
+      success: `三个一组重复，后面是${itemNames[third]}。`,
+      retry: '找出前三个组成的小队。',
+      tags: ['精选', '规律', '逻辑', category.label],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 1) {
+    const source = pickFrom(category.items, seed)
+    const target = pickFrom(category.items.filter((candidate) => candidate !== source), seed + 1)
+    const result = withAnswer([itemChoice('correct', target, true), itemChoice('wrong-1', source, true), itemChoice('wrong-2', target)], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '类比',
+      prompt: `大${itemNames[source]}变小${itemNames[source]}，大${itemNames[target]}会变成？`,
+      scene: [itemVisual(source), itemVisual(source, true), itemVisual(target), visual('pill', 'ink', false, '?')],
+      answerId: result.answerId,
+      options: result.options,
+      success: '变化规则是从大变小，物品不变。',
+      retry: '先看前两个物品发生了什么变化。',
+      tags: ['精选', '逻辑', '类比', '大小'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 2) {
+    const group = pickFrom(useGroups, seed)
+    const first = pickFrom(group.items, seed)
+    const second = pickFrom(group.items, seed + 1)
+    const wrongA = pickFrom(group.outside, seed + 2)
+    const wrongB = pickFrom(group.outside, seed + 3)
+    const result = withAnswer(
+      [
+        option('correct', [itemVisual(first, true), itemVisual(second, true)], group.label),
+        option('wrong-1', [itemVisual(first, true), itemVisual(wrongA, true)], '混在一起'),
+        option('wrong-2', [itemVisual(wrongA, true), itemVisual(wrongB, true)], '不符合'),
+      ],
+      0,
+      seed,
+    )
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '组合分类',
+      prompt: `哪一组都${group.cue}？`,
+      scene: [visual('pill', 'leaf', false, group.label)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[first]}和${itemNames[second]}都${group.cue}。`,
+      retry: `要两个都符合“${group.cue}”。`,
+      tags: ['精选', '分类', '组合判断', '常识'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 3) {
+    const from = pickFrom(category.outside, seed)
+    const to = pickFrom(category.items, seed + 1)
+    const result = withAnswer([itemChoice('correct', to), itemChoice('wrong-1', from), itemChoice('wrong-2', pickFrom(category.outside, seed + 2))], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '矩阵补缺',
+      prompt: `上面换成${category.label}，下面也这样换，问号处是什么？`,
+      scene: [itemVisual(from), itemVisual(to), visual('pill', 'ink', false, '→'), itemVisual(pickFrom(category.outside, seed + 3)), visual('pill', 'ink', false, '?')],
+      answerId: result.answerId,
+      options: result.options,
+      success: `规则是换成${category.label}。`,
+      retry: '先看上面从哪一类变到哪一类。',
+      tags: ['精选', '逻辑', '矩阵', '分类'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 4) {
+    const leftCount = 1 + (seed % 3)
+    const rightCount = 2 + ((seed + 1) % 3)
+    const total = leftCount + rightCount
+    const result = countOptions(total, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '数量合成',
+      prompt: `两边${itemNames[item]}合起来一共有几个？`,
+      scene: [
+        ...Array.from({ length: leftCount }, () => itemVisual(item, true)),
+        visual('pill', 'ink', false, '+'),
+        ...Array.from({ length: rightCount }, () => itemVisual(item, true)),
+      ],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${leftCount} 个加 ${rightCount} 个，一共 ${total} 个。`,
+      retry: '先数左边，再接着数右边。',
+      tags: ['精选', '数量', '合成'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 5) return { ...mazeQuestion('age4', seed), tags: ['精选', '空间', '路径', '逻辑'] }
+
+  if (family === 6) {
+    const group = pickFrom(useGroups, seed)
+    const source = pickFrom(group.items, seed)
+    const correct = pickFrom(group.items.filter((candidate) => candidate !== source), seed + 1)
+    const wrongs = pickDistinctItems(seed + 2, [source, correct], 2, group.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'connect',
+      skill: '连线推理',
+      prompt: `${itemNames[source]}${group.cue}，哪一个也${group.cue}？`,
+      scene: [itemVisual(source)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}也${group.cue}。`,
+      retry: `找另一个${group.label}。`,
+      tags: ['精选', '配对', '类比', '常识'],
+      difficulty: 3,
+      meta: { relation: 'count' },
+    })
+  }
+
+  if (family === 7) {
+    const wrongs = pickDistinctItems(seed + 3, [item], 2)
+    const result = withAnswer([shadowChoice('correct', item), shadowChoice('wrong-1', wrongs[0]), shadowChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: `哪一个是${itemNames[item]}的影子？`,
+      scene: [itemVisual(item)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[item]}的影子轮廓相同。`,
+      retry: '排除颜色，只看外形。',
+      tags: ['精选', '观察力', '空间'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 8) {
+    const center = pickFrom(animalItems, seed)
+    const left = pickFrom(pickDistinctItems(seed + 4, [center], 1), 0)
+    const right = pickFrom(pickDistinctItems(seed + 5, [center, left], 1), 0)
+    const targetSide = seed % 2 === 0 ? 'a' : 'b'
+    const target = targetSide === 'a' ? left : right
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'leftRight',
+      skill: '左右判断',
+      prompt: `${itemNames[target]}在${itemNames[center]}的哪一边？`,
+      scene: [itemVisual(left), itemVisual(center), itemVisual(right)],
+      answerId: targetSide,
+      options: [
+        { id: 'a', text: '左边' },
+        { id: 'b', text: '右边' },
+      ],
+      success: `${itemNames[target]}在${targetSide === 'a' ? '左边' : '右边'}。`,
+      retry: `先找到中间的${itemNames[center]}。`,
+      tags: ['精选', '空间', '左右', '观察力'],
+      difficulty: 3,
+      meta: { left: itemVisual(left), target: itemVisual(target), right: itemVisual(right), relation: 'side' },
+    })
+  }
+
+  if (family === 9) {
+    const targetTone = pickFrom(tones, seed)
+    const correct = pickFrom(allReviewedItems.filter((candidate) => itemTones[candidate] === targetTone), seed)
+    const wrongs = pickDistinctItems(seed + 6, [correct], 2, allReviewedItems.filter((candidate) => itemTones[candidate] !== targetTone))
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'choice',
+      skill: '双条件判断',
+      prompt: `哪一个是${toneNames[targetTone]}的生活物品？`,
+      scene: [visual('pill', targetTone, false, toneNames[targetTone]), itemVisual(correct, true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}符合颜色条件。`,
+      retry: '先看颜色，再看物品。',
+      tags: ['精选', '颜色', '观察力', '逻辑'],
+      difficulty: 3,
+    })
+  }
+
+  if (family === 10) return sequenceQuestion('age4', seed, 3)
+  if (family === 11) return analogyQuestion('age4', seed)
+  if (family === 12) return matrixQuestion('age4', seed)
+  if (family === 13) return sumQuestion('age4', seed)
+  if (family === 14) {
+    const correct = pickFrom(category.items, seed)
+    const wrongs = pickDistinctItems(seed + 7, [correct], 2, category.outside)
+    const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+    return makeQuestion(seed, {
+      age: 'age4',
+      template: 'drag',
+      skill: '拖拽分类',
+      prompt: `把${category.label}放进${category.container}`,
+      scene: [visual('pill', category.tone, false, category.container), itemVisual(pickFrom(category.items, seed + 1), true)],
+      answerId: result.answerId,
+      options: result.options,
+      success: `${itemNames[correct]}属于${category.label}。`,
+      retry: `只放${category.label}。`,
+      tags: ['精选', '分类', category.label, '手眼协调'],
+      difficulty: 3,
+      meta: { dropLabel: category.container },
+    })
+  }
+
+  const correct = pickFrom(category.items, seed)
+  const wrongs = pickDistinctItems(seed + 8, [correct], 2, category.outside)
+  const result = withAnswer([itemChoice('correct', correct), itemChoice('wrong-1', wrongs[0]), itemChoice('wrong-2', wrongs[1])], 0, seed)
+  return makeQuestion(seed, {
+    age: 'age4',
+    template: 'choice',
+    skill: '分类推理',
+    prompt: `哪一个最适合放进${category.label}小队？`,
+    scene: [itemVisual(pickFrom(category.items, seed + 1), true), itemVisual(pickFrom(category.items, seed + 2), true), visual('pill', category.tone, false, category.label)],
+    answerId: result.answerId,
+    options: result.options,
+    success: `${itemNames[correct]}和它们是同一类。`,
+    retry: `先看小队里都是什么${category.label}。`,
+    tags: ['精选', '分类', '推理', category.label],
+    difficulty: 3,
+  })
+}
+
+function buildReviewedQuestions(existing: Question[], builder: (index: number) => Question) {
+  const expanded = Array.from({ length: reviewedQuestionTarget }, (_, index) => builder(index))
+  const seen = new Set<string>()
+  return [...existing, ...expanded]
+    .map((question) => ({
+      ...question,
+      tags: question.tags.includes('精选') ? question.tags : ['精选', ...question.tags],
+    }))
+    .filter((question) => {
+      if (seen.has(question.id)) return false
+      seen.add(question.id)
+      return true
+    })
+    .slice(0, reviewedQuestionTarget)
+}
 
 function fillAgeQuestions(curated: Question[], generated: Question[]) {
   return [...curated, ...generated].slice(0, ageQuestionTarget)
 }
 
 function buildAge2(): Question[] {
-  return fillAgeQuestions(curatedAge2Questions(), [
+  return fillAgeQuestions(buildReviewedQuestions(curatedAge2Questions(), age2ReviewedQuestion), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => matchQuestion('age2', index, 1)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => countQuestion('age2', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => oddQuestion('age2', index)),
@@ -1224,7 +2114,7 @@ function buildAge2(): Question[] {
 }
 
 function buildAge3(): Question[] {
-  return fillAgeQuestions(curatedAge3Questions(), [
+  return fillAgeQuestions(buildReviewedQuestions(curatedAge3Questions(), age3ReviewedQuestion), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age3', index, 2)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => categoryQuestion('age3', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => connectQuestion('age3', index, 2)),
@@ -1234,7 +2124,7 @@ function buildAge3(): Question[] {
 }
 
 function buildAge4(): Question[] {
-  return fillAgeQuestions(curatedAge4Questions(), [
+  return fillAgeQuestions(buildReviewedQuestions(curatedAge4Questions(), age4ReviewedQuestion), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age4', index, 3)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => analogyQuestion('age4', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => matrixQuestion('age4', index)),
