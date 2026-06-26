@@ -12,36 +12,11 @@ export type StageGesture = {
   overTarget: boolean
 } | null
 
-const itemEmoji: Record<NonNullable<VisualToken['item']>, string> = {
-  apple: '🍎',
-  banana: '🍌',
-  grapes: '🍇',
-  carrot: '🥕',
-  hat: '🧢',
-  sock: '🧦',
-  scarf: '🧣',
-  cookie: '🍪',
-  car: '🚗',
-  boat: '⛵',
-  plane: '✈️',
-  ball: '⚽',
-  blocks: '🧱',
-  pinwheel: '✦',
-  cat: '🐱',
-  dog: '🐶',
-  bird: '🐦',
-  spoon: '🥄',
-  bowl: '🥣',
-  cup: '🥛',
-  drum: '🥁',
-  bell: '🔔',
-  maraca: '🎵',
-}
-
 function ObjectTile({ token }: { token: VisualToken }) {
+  const item = token.item
   const className = [
     'object-tile',
-    `object-${token.item}`,
+    item ? `object-${item}` : '',
     `tone-${token.tone}`,
     token.small ? 'is-small' : '',
     token.tone === 'ink' ? 'is-shadow' : '',
@@ -50,8 +25,14 @@ function ObjectTile({ token }: { token: VisualToken }) {
     .join(' ')
 
   return (
-    <span className={className} aria-label={token.label ?? token.item}>
-      <span className="object-picture">{token.item ? itemEmoji[token.item] : ''}</span>
+    <span className={className} aria-label={token.label ?? item}>
+      {item && (
+        <span className={`object-figure object-figure-${item}`} aria-hidden="true">
+          {Array.from({ length: 7 }, (_, index) => (
+            <span className={`object-part object-part-${index + 1}`} key={index} />
+          ))}
+        </span>
+      )}
     </span>
   )
 }

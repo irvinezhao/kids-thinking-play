@@ -61,10 +61,16 @@ const itemShapes: Record<ItemName, ShapeName> = {
   apple: 'circle',
   banana: 'pill',
   grapes: 'circle',
+  orange: 'circle',
+  strawberry: 'diamond',
+  pear: 'pill',
   carrot: 'triangle',
   hat: 'pill',
   sock: 'pill',
   scarf: 'pill',
+  shirt: 'square',
+  pants: 'pill',
+  shoe: 'pill',
   cookie: 'circle',
   car: 'square',
   boat: 'pill',
@@ -86,10 +92,16 @@ const itemTones: Record<ItemName, Tone> = {
   apple: 'coral',
   banana: 'sun',
   grapes: 'grape',
+  orange: 'sun',
+  strawberry: 'coral',
+  pear: 'leaf',
   carrot: 'coral',
   hat: 'grape',
   sock: 'leaf',
   scarf: 'sun',
+  shirt: 'sky',
+  pants: 'sky',
+  shoe: 'coral',
   cookie: 'coral',
   car: 'sky',
   boat: 'leaf',
@@ -111,10 +123,16 @@ const itemNames: Record<ItemName, string> = {
   apple: '苹果',
   banana: '香蕉',
   grapes: '葡萄',
+  orange: '橙子',
+  strawberry: '草莓',
+  pear: '梨',
   carrot: '胡萝卜',
   hat: '帽子',
   sock: '袜子',
   scarf: '围巾',
+  shirt: '上衣',
+  pants: '裤子',
+  shoe: '鞋子',
   cookie: '饼干',
   car: '小车',
   boat: '小船',
@@ -140,6 +158,9 @@ const categorySets = [
       { text: '苹果', item: 'apple' as ItemName },
       { text: '香蕉', item: 'banana' as ItemName },
       { text: '葡萄', item: 'grapes' as ItemName },
+      { text: '橙子', item: 'orange' as ItemName },
+      { text: '草莓', item: 'strawberry' as ItemName },
+      { text: '梨', item: 'pear' as ItemName },
     ],
     outside: { text: '胡萝卜', item: 'carrot' as ItemName },
   },
@@ -176,6 +197,9 @@ const categorySets = [
       { text: '帽子', item: 'hat' as ItemName },
       { text: '袜子', item: 'sock' as ItemName },
       { text: '围巾', item: 'scarf' as ItemName },
+      { text: '上衣', item: 'shirt' as ItemName },
+      { text: '裤子', item: 'pants' as ItemName },
+      { text: '鞋子', item: 'shoe' as ItemName },
     ],
     outside: { text: '饼干', item: 'cookie' as ItemName },
   },
@@ -463,8 +487,8 @@ function categoryQuestion(age: AgeKey, seed: number): Question {
   const examples = [inside[insideOffset], inside[(insideOffset + 1) % inside.length]]
   const result = withAnswer(
     [
-      option('wrong-1', [itemVisual(inside[0].item)], inside[0].text),
-      option('wrong-2', [itemVisual(inside[1].item)], inside[1].text),
+      option('wrong-1', [itemVisual(examples[0].item)], examples[0].text),
+      option('wrong-2', [itemVisual(examples[1].item)], examples[1].text),
       option('correct', [itemVisual(outside.item)], outside.text),
     ],
     2,
@@ -693,34 +717,525 @@ function mazeQuestion(age: AgeKey, seed: number): Question {
   })
 }
 
-function buildAge2(): Question[] {
+function curatedAge2Questions(): Question[] {
+  const sameApple = withAnswer(
+    [option('correct', [itemVisual('apple')], '苹果'), option('wrong-1', [itemVisual('banana')], '香蕉'), option('wrong-2', [itemVisual('carrot')], '胡萝卜')],
+    0,
+    2000,
+  )
+  const moreBananas = withAnswer(
+    [
+      option('wrong', [itemVisual('banana', true), itemVisual('banana', true)], '2 个'),
+      option('correct', [itemVisual('banana', true), itemVisual('banana', true), itemVisual('banana', true)], '3 个'),
+    ],
+    1,
+    2001,
+  )
+  const shoe = withAnswer(
+    [option('correct', [itemVisual('shoe')], '鞋子'), option('wrong-1', [itemVisual('cup')], '杯子'), option('wrong-2', [itemVisual('pear')], '梨')],
+    0,
+    2002,
+  )
+  const appleShadow = withAnswer(
+    [
+      option('correct', [{ ...itemVisual('apple'), tone: 'ink' }], '苹果影子'),
+      option('wrong-1', [{ ...itemVisual('banana'), tone: 'ink' }], '香蕉影子'),
+      option('wrong-2', [{ ...itemVisual('hat'), tone: 'ink' }], '帽子影子'),
+    ],
+    0,
+    2003,
+  )
+  const fruitBasket = withAnswer(
+    [option('correct', [itemVisual('orange')], '橙子'), option('wrong-1', [itemVisual('sock')], '袜子'), option('wrong-2', [itemVisual('car')], '小车')],
+    0,
+    2004,
+  )
+  const countStrawberry = withAnswer(
+    [{ id: 'correct', text: '3 个' }, { id: 'wrong-1', text: '2 个' }, { id: 'wrong-2', text: '4 个' }],
+    0,
+    2005,
+  )
+  const roundSnack = withAnswer(
+    [option('correct', [itemVisual('cookie')], '饼干'), option('wrong-1', [itemVisual('banana')], '香蕉'), option('wrong-2', [itemVisual('scarf')], '围巾')],
+    0,
+    2006,
+  )
+  const oddClothes = withAnswer(
+    [option('wrong-1', [itemVisual('hat')], '帽子'), option('wrong-2', [itemVisual('sock')], '袜子'), option('correct', [itemVisual('apple')], '苹果')],
+    2,
+    2007,
+  )
+
   return [
+    makeQuestion(2000, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找相同',
+      prompt: '哪一个和小苹果一样？',
+      scene: [itemVisual('apple')],
+      answerId: sameApple.answerId,
+      options: sameApple.options,
+      success: '找到同样的小苹果啦。',
+      retry: '先看颜色，再看是不是圆圆的苹果。',
+      tags: ['精选', '观察力', '水果', '形色匹配'],
+      difficulty: 1,
+    }),
+    makeQuestion(2001, {
+      age: 'age2',
+      template: 'choice',
+      skill: '比多少',
+      prompt: '哪一组香蕉更多？',
+      scene: [visual('pill', 'sun', false, '多')],
+      answerId: moreBananas.answerId,
+      options: moreBananas.options,
+      success: '三个香蕉比两个香蕉更多。',
+      retry: '可以一个一个数香蕉。',
+      tags: ['精选', '数量', '比较', '水果'],
+      difficulty: 1,
+    }),
+    makeQuestion(2002, {
+      age: 'age2',
+      template: 'choice',
+      skill: '生活常识',
+      prompt: '哪一个可以穿在脚上？',
+      scene: [visual('pill', 'leaf', false, '脚')],
+      answerId: shoe.answerId,
+      options: shoe.options,
+      success: '鞋子可以穿在脚上。',
+      retry: '想一想出门时脚上穿什么。',
+      tags: ['精选', '常识', '衣物'],
+      difficulty: 1,
+    }),
+    makeQuestion(2003, {
+      age: 'age2',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: '哪一个是苹果的影子？',
+      scene: [itemVisual('apple')],
+      answerId: appleShadow.answerId,
+      options: appleShadow.options,
+      success: '苹果的影子也是圆圆的苹果轮廓。',
+      retry: '影子只看外面的样子。',
+      tags: ['精选', '观察力', '空间', '水果'],
+      difficulty: 1,
+    }),
+    makeQuestion(2004, {
+      age: 'age2',
+      template: 'drag',
+      skill: '拖拽分类',
+      prompt: '把水果拖到果篮里',
+      scene: [itemVisual('apple', true), itemVisual('pear', true)],
+      answerId: fruitBasket.answerId,
+      options: fruitBasket.options,
+      success: '橙子是水果，放进果篮。',
+      retry: '果篮里要放可以吃的水果。',
+      tags: ['精选', '分类', '水果', '手眼协调'],
+      difficulty: 1,
+      meta: { dropLabel: '果篮' },
+    }),
+    makeQuestion(2005, {
+      age: 'age2',
+      template: 'choice',
+      skill: '数一数',
+      prompt: '这里有几个草莓？',
+      scene: [itemVisual('strawberry', true), itemVisual('strawberry', true), itemVisual('strawberry', true)],
+      answerId: countStrawberry.answerId,
+      options: countStrawberry.options,
+      success: '一共有 3 个草莓。',
+      retry: '用手指点着，一个一个数。',
+      tags: ['精选', '数量', '数数', '水果'],
+      difficulty: 1,
+    }),
+    makeQuestion(2006, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找形状',
+      prompt: '哪一个是圆圆的点心？',
+      scene: [visual('circle', 'coral', false, '圆')],
+      answerId: roundSnack.answerId,
+      options: roundSnack.options,
+      success: '饼干是圆圆的点心。',
+      retry: '找外面圆圆的那个。',
+      tags: ['精选', '形状', '常识', '食物'],
+      difficulty: 1,
+    }),
+    makeQuestion(2007, {
+      age: 'age2',
+      template: 'choice',
+      skill: '找不同',
+      prompt: '哪一个不是衣物？',
+      scene: [itemVisual('hat', true), itemVisual('sock', true)],
+      answerId: oddClothes.answerId,
+      options: oddClothes.options,
+      success: '苹果可以吃，不是衣物。',
+      retry: '衣物是可以穿戴在身上的。',
+      tags: ['精选', '分类', '衣物', '常识'],
+      difficulty: 1,
+    }),
+  ]
+}
+
+function curatedAge3Questions(): Question[] {
+  const notFruit = withAnswer(
+    [option('wrong-1', [itemVisual('pear')], '梨'), option('wrong-2', [itemVisual('strawberry')], '草莓'), option('correct', [itemVisual('shoe')], '鞋子')],
+    2,
+    2100,
+  )
+  const notClothes = withAnswer(
+    [option('wrong-1', [itemVisual('shirt')], '上衣'), option('wrong-2', [itemVisual('pants')], '裤子'), option('correct', [itemVisual('cookie')], '饼干')],
+    2,
+    2101,
+  )
+  const bodyWear = withAnswer(
+    [option('correct', [itemVisual('shirt')], '上衣'), option('wrong-1', [itemVisual('boat')], '小船'), option('wrong-2', [itemVisual('orange')], '橙子')],
+    0,
+    2102,
+  )
+  const fruitPattern = withAnswer(
+    [option('correct', [itemVisual('pear')], '梨'), option('wrong-1', [itemVisual('apple')], '苹果'), option('wrong-2', [itemVisual('banana')], '香蕉')],
+    0,
+    2103,
+  )
+  const leftShoe = withAnswer([{ id: 'a', text: '左边' }, { id: 'b', text: '右边' }], 0, 2104)
+  const matchFruit = withAnswer(
+    [option('correct', [itemVisual('orange')], '橙子'), option('wrong-1', [itemVisual('hat')], '帽子'), option('wrong-2', [itemVisual('car')], '小车')],
+    0,
+    2105,
+  )
+  const hatShadow = withAnswer(
+    [
+      option('correct', [{ ...itemVisual('hat'), tone: 'ink' }], '帽子影子'),
+      option('wrong-1', [{ ...itemVisual('cup'), tone: 'ink' }], '杯子影子'),
+      option('wrong-2', [{ ...itemVisual('shoe'), tone: 'ink' }], '鞋子影子'),
+    ],
+    0,
+    2106,
+  )
+  const closet = withAnswer(
+    [option('correct', [itemVisual('pants')], '裤子'), option('wrong-1', [itemVisual('apple')], '苹果'), option('wrong-2', [itemVisual('drum')], '小鼓')],
+    0,
+    2107,
+  )
+  const instrument = withAnswer(
+    [option('correct', [itemVisual('bell')], '铃铛'), option('wrong-1', [itemVisual('cup')], '杯子'), option('wrong-2', [itemVisual('shoe')], '鞋子')],
+    0,
+    2108,
+  )
+
+  return [
+    makeQuestion(2100, {
+      age: 'age3',
+      template: 'choice',
+      skill: '分类',
+      prompt: '哪一个不是水果？',
+      scene: [itemVisual('apple', true), itemVisual('banana', true), visual('pill', 'leaf', false, '水果')],
+      answerId: notFruit.answerId,
+      options: notFruit.options,
+      success: '鞋子是衣物，不是水果。',
+      retry: '水果是可以吃的，比如梨和草莓。',
+      tags: ['精选', '分类', '水果', '常识'],
+      difficulty: 2,
+    }),
+    makeQuestion(2101, {
+      age: 'age3',
+      template: 'choice',
+      skill: '分类',
+      prompt: '哪一个不是衣物？',
+      scene: [itemVisual('shirt', true), itemVisual('pants', true), visual('pill', 'sky', false, '衣物')],
+      answerId: notClothes.answerId,
+      options: notClothes.options,
+      success: '饼干可以吃，不是衣物。',
+      retry: '衣物是可以穿戴的东西。',
+      tags: ['精选', '分类', '衣物', '常识'],
+      difficulty: 2,
+    }),
+    makeQuestion(2102, {
+      age: 'age3',
+      template: 'choice',
+      skill: '生活常识',
+      prompt: '哪一个可以穿在身上？',
+      scene: [visual('pill', 'sky', false, '穿')],
+      answerId: bodyWear.answerId,
+      options: bodyWear.options,
+      success: '上衣可以穿在身上。',
+      retry: '想一想早上换衣服时会穿什么。',
+      tags: ['精选', '常识', '衣物'],
+      difficulty: 2,
+    }),
+    makeQuestion(2103, {
+      age: 'age3',
+      template: 'choice',
+      skill: '规律',
+      prompt: '苹果、香蕉、梨，又是苹果、香蕉，后面是什么？',
+      scene: [itemVisual('apple', true), itemVisual('banana', true), itemVisual('pear', true), itemVisual('apple', true), itemVisual('banana', true), visual('pill', 'ink', false, '?')],
+      answerId: fruitPattern.answerId,
+      options: fruitPattern.options,
+      success: '苹果、香蕉、梨三个一组重复。',
+      retry: '从第一个水果开始慢慢念一遍。',
+      tags: ['精选', '规律', '水果', '逻辑'],
+      difficulty: 2,
+    }),
+    makeQuestion(2104, {
+      age: 'age3',
+      template: 'leftRight',
+      skill: '左右判断',
+      prompt: '鞋子在小猫的哪一边？',
+      scene: [itemVisual('shoe'), itemVisual('cat'), itemVisual('cup')],
+      answerId: leftShoe.answerId,
+      options: leftShoe.options,
+      success: '鞋子在小猫的左边。',
+      retry: '先找到中间的小猫，再看鞋子在哪边。',
+      tags: ['精选', '空间', '左右', '生活物品'],
+      difficulty: 2,
+      meta: { left: itemVisual('shoe'), target: itemVisual('shoe'), right: itemVisual('cup'), relation: 'side' },
+    }),
+    makeQuestion(2105, {
+      age: 'age3',
+      template: 'connect',
+      skill: '连线配对',
+      prompt: '把同类水果连起来',
+      scene: [itemVisual('apple')],
+      answerId: matchFruit.answerId,
+      options: matchFruit.options,
+      success: '苹果和橙子都是水果。',
+      retry: '先想一想哪个也可以吃、也属于水果。',
+      tags: ['精选', '配对', '分类', '水果'],
+      difficulty: 2,
+      meta: { relation: 'count' },
+    }),
+    makeQuestion(2106, {
+      age: 'age3',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: '哪一个是帽子的影子？',
+      scene: [itemVisual('hat')],
+      answerId: hatShadow.answerId,
+      options: hatShadow.options,
+      success: '帽子的影子保留了帽檐的轮廓。',
+      retry: '不要看颜色，只看外形轮廓。',
+      tags: ['精选', '观察力', '空间', '衣物'],
+      difficulty: 2,
+    }),
+    makeQuestion(2107, {
+      age: 'age3',
+      template: 'drag',
+      skill: '拖拽分类',
+      prompt: '把衣物放进衣柜',
+      scene: [itemVisual('shirt', true), itemVisual('hat', true)],
+      answerId: closet.answerId,
+      options: closet.options,
+      success: '裤子是衣物，放进衣柜。',
+      retry: '衣柜里放可以穿戴的东西。',
+      tags: ['精选', '分类', '衣物', '手眼协调'],
+      difficulty: 2,
+      meta: { dropLabel: '衣柜' },
+    }),
+    makeQuestion(2108, {
+      age: 'age3',
+      template: 'choice',
+      skill: '分类',
+      prompt: '哪一个是乐器？',
+      scene: [itemVisual('drum', true), itemVisual('maraca', true), visual('pill', 'sun', false, '乐器')],
+      answerId: instrument.answerId,
+      options: instrument.options,
+      success: '铃铛会发出声音，是乐器。',
+      retry: '乐器是可以发出音乐声音的东西。',
+      tags: ['精选', '分类', '乐器', '常识'],
+      difficulty: 2,
+    }),
+  ]
+}
+
+function curatedAge4Questions(): Question[] {
+  const fruitMatrix = withAnswer(
+    [option('correct', [itemVisual('strawberry')], '草莓'), option('wrong-1', [itemVisual('shoe')], '鞋子'), option('wrong-2', [itemVisual('carrot')], '胡萝卜')],
+    0,
+    2200,
+  )
+  const fiveApples = withAnswer(
+    [{ id: 'correct', text: '5 个' }, { id: 'wrong-1', text: '4 个' }, { id: 'wrong-2', text: '6 个' }],
+    0,
+    2201,
+  )
+  const smallHat = withAnswer(
+    [option('correct', [itemVisual('hat', true)], '小帽子'), option('wrong-1', [itemVisual('shoe', true)], '小鞋子'), option('wrong-2', [itemVisual('hat')], '大帽子')],
+    0,
+    2202,
+  )
+  const edibleGroup = withAnswer(
+    [
+      option('correct', [itemVisual('apple', true), itemVisual('cookie', true)], '都能吃'),
+      option('wrong-1', [itemVisual('shirt', true), itemVisual('shoe', true)], '都能穿'),
+      option('wrong-2', [itemVisual('car', true), itemVisual('boat', true)], '都能走'),
+    ],
+    0,
+    2203,
+  )
+  const flyPair = withAnswer(
+    [option('correct', [itemVisual('bird')], '小鸟'), option('wrong-1', [itemVisual('boat')], '小船'), option('wrong-2', [itemVisual('bowl')], '碗')],
+    0,
+    2204,
+  )
+  const rightCup = withAnswer([{ id: 'a', text: '左边' }, { id: 'b', text: '右边' }], 1, 2205)
+  const carShadow = withAnswer(
+    [
+      option('correct', [{ ...itemVisual('car'), tone: 'ink' }], '小车影子'),
+      option('wrong-1', [{ ...itemVisual('boat'), tone: 'ink' }], '小船影子'),
+      option('wrong-2', [{ ...itemVisual('drum'), tone: 'ink' }], '小鼓影子'),
+    ],
+    0,
+    2206,
+  )
+  const complexPattern = withAnswer(
+    [option('correct', [itemVisual('pear')], '梨'), option('wrong-1', [itemVisual('apple')], '苹果'), option('wrong-2', [itemVisual('strawberry')], '草莓')],
+    0,
+    2207,
+  )
+
+  return [
+    makeQuestion(2200, {
+      age: 'age4',
+      template: 'choice',
+      skill: '矩阵补缺',
+      prompt: '上面都换成水果，下面也这样换，问号处是什么？',
+      scene: [itemVisual('shoe'), itemVisual('orange'), visual('pill', 'ink', false, '→'), itemVisual('hat'), visual('pill', 'ink', false, '?')],
+      answerId: fruitMatrix.answerId,
+      options: fruitMatrix.options,
+      success: '上面从衣物换成水果，下面也要换成水果。',
+      retry: '先看上面两个物品属于哪一类，再照着变。',
+      tags: ['精选', '逻辑', '分类', '矩阵'],
+      difficulty: 3,
+    }),
+    makeQuestion(2201, {
+      age: 'age4',
+      template: 'choice',
+      skill: '数量合成',
+      prompt: '两边苹果合起来一共有几个？',
+      scene: [itemVisual('apple', true), itemVisual('apple', true), visual('pill', 'ink', false, '+'), itemVisual('apple', true), itemVisual('apple', true), itemVisual('apple', true)],
+      answerId: fiveApples.answerId,
+      options: fiveApples.options,
+      success: '2 个加 3 个，一共 5 个。',
+      retry: '先数左边 2 个，再接着数右边 3 个。',
+      tags: ['精选', '数量', '合成', '水果'],
+      difficulty: 3,
+    }),
+    makeQuestion(2202, {
+      age: 'age4',
+      template: 'choice',
+      skill: '类比',
+      prompt: '大杯子变小杯子，大帽子会变成？',
+      scene: [itemVisual('cup'), itemVisual('cup', true), itemVisual('hat'), visual('pill', 'ink', false, '?')],
+      answerId: smallHat.answerId,
+      options: smallHat.options,
+      success: '变化规则是从大变小，物品不变。',
+      retry: '先看杯子发生了什么变化。',
+      tags: ['精选', '逻辑', '类比', '大小'],
+      difficulty: 3,
+    }),
+    makeQuestion(2203, {
+      age: 'age4',
+      template: 'choice',
+      skill: '组合分类',
+      prompt: '哪一组都能吃？',
+      scene: [visual('pill', 'leaf', false, '都能吃')],
+      answerId: edibleGroup.answerId,
+      options: edibleGroup.options,
+      success: '苹果和饼干都能吃。',
+      retry: '要两个都符合“能吃”。',
+      tags: ['精选', '分类', '组合判断', '常识'],
+      difficulty: 3,
+    }),
+    makeQuestion(2204, {
+      age: 'age4',
+      template: 'connect',
+      skill: '连线推理',
+      prompt: '飞机会飞，哪一个也会飞？',
+      scene: [itemVisual('plane')],
+      answerId: flyPair.answerId,
+      options: flyPair.options,
+      success: '小鸟也会飞。',
+      retry: '想一想哪些东西在天上飞。',
+      tags: ['精选', '配对', '类比', '常识'],
+      difficulty: 3,
+      meta: { relation: 'count' },
+    }),
+    makeQuestion(2205, {
+      age: 'age4',
+      template: 'leftRight',
+      skill: '左右判断',
+      prompt: '杯子在小狗的哪一边？',
+      scene: [itemVisual('shoe'), itemVisual('dog'), itemVisual('cup')],
+      answerId: rightCup.answerId,
+      options: rightCup.options,
+      success: '杯子在小狗的右边。',
+      retry: '先找到中间的小狗，再看杯子在哪边。',
+      tags: ['精选', '空间', '左右', '生活物品'],
+      difficulty: 3,
+      meta: { target: itemVisual('cup'), left: itemVisual('shoe'), right: itemVisual('cup'), relation: 'side' },
+    }),
+    makeQuestion(2206, {
+      age: 'age4',
+      template: 'shadow',
+      skill: '找阴影',
+      prompt: '哪一个是小车的影子？',
+      scene: [itemVisual('car')],
+      answerId: carShadow.answerId,
+      options: carShadow.options,
+      success: '小车的影子保留了车身和轮子的轮廓。',
+      retry: '只看外形轮廓，不看颜色。',
+      tags: ['精选', '观察力', '空间', '交通工具'],
+      difficulty: 3,
+    }),
+    makeQuestion(2207, {
+      age: 'age4',
+      template: 'choice',
+      skill: '三步规律',
+      prompt: '苹果、草莓、梨、苹果、草莓，后面是什么？',
+      scene: [itemVisual('apple', true), itemVisual('strawberry', true), itemVisual('pear', true), itemVisual('apple', true), itemVisual('strawberry', true), visual('pill', 'ink', false, '?')],
+      answerId: complexPattern.answerId,
+      options: complexPattern.options,
+      success: '三个水果一组重复，后面是梨。',
+      retry: '把前三个当成一组，再看第二组缺什么。',
+      tags: ['精选', '规律', '逻辑', '水果'],
+      difficulty: 3,
+    }),
+  ]
+}
+
+const ageQuestionTarget = questionFamilyCount * 5
+
+function fillAgeQuestions(curated: Question[], generated: Question[]) {
+  return [...curated, ...generated].slice(0, ageQuestionTarget)
+}
+
+function buildAge2(): Question[] {
+  return fillAgeQuestions(curatedAge2Questions(), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => matchQuestion('age2', index, 1)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => countQuestion('age2', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => oddQuestion('age2', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => shadowQuestion('age2', index, 1)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => dragQuestion('age2', index, 1)),
-  ]
+  ])
 }
 
 function buildAge3(): Question[] {
-  return [
+  return fillAgeQuestions(curatedAge3Questions(), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age3', index, 2)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => categoryQuestion('age3', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => connectQuestion('age3', index, 2)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => shadowQuestion('age3', index, 2)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => leftRightQuestion('age3', index, 2)),
-  ]
+  ])
 }
 
 function buildAge4(): Question[] {
-  return [
+  return fillAgeQuestions(curatedAge4Questions(), [
     ...Array.from({ length: questionFamilyCount }, (_, index) => sequenceQuestion('age4', index, 3)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => analogyQuestion('age4', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => matrixQuestion('age4', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => mazeQuestion('age4', index)),
     ...Array.from({ length: questionFamilyCount }, (_, index) => sumQuestion('age4', index)),
-  ]
+  ])
 }
 
 export const generatedQuestions: Question[] = [...buildAge2(), ...buildAge3(), ...buildAge4()]
@@ -729,18 +1244,48 @@ export function getQuestionCountByAge(questions: Question[], age: AgeKey) {
   return questions.filter((question) => question.age === age && question.status === 'approved').length
 }
 
+function hashQuestion(seed: number, id: string) {
+  let hash = Math.abs(seed) || 2166136261
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
 export function pickSessionQuestions(questions: Question[], age: AgeKey, seed: number) {
   const pool = questions.filter((question) => question.age === age && question.status === 'approved')
   if (pool.length <= sessionQuestionCount) return pool
 
   const picked: Question[] = []
-  let cursor = Math.abs(seed) % pool.length
-  while (picked.length < sessionQuestionCount) {
-    const question = pool[cursor % pool.length]
-    if (!picked.some((item) => item.id === question.id)) {
-      picked.push(question)
-    }
-    cursor += 17
+  const skillCounts = new Map<string, number>()
+  const sorted = [...pool].sort((a, b) => hashQuestion(seed, a.id) - hashQuestion(seed, b.id))
+  const featured = sorted.filter((question) => question.tags.includes('精选')).slice(0, 3)
+
+  function addQuestion(question: Question) {
+    if (picked.some((item) => item.id === question.id)) return false
+    picked.push(question)
+    skillCounts.set(question.skill, (skillCounts.get(question.skill) ?? 0) + 1)
+    return true
   }
-  return picked
+
+  featured.forEach(addQuestion)
+
+  for (const question of sorted) {
+    if (picked.length >= sessionQuestionCount) break
+    if ((skillCounts.get(question.skill) ?? 0) >= 2) continue
+    addQuestion(question)
+  }
+
+  for (const question of sorted) {
+    if (picked.length >= sessionQuestionCount) break
+    addQuestion(question)
+  }
+
+  return picked.sort((a, b) => {
+    const aFeatured = a.tags.includes('精选') ? 0 : 1
+    const bFeatured = b.tags.includes('精选') ? 0 : 1
+    if (aFeatured !== bFeatured) return aFeatured - bFeatured
+    return hashQuestion(seed + 31, a.id) - hashQuestion(seed + 31, b.id)
+  })
 }
