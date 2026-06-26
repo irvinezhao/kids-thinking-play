@@ -35,7 +35,6 @@ import {
   pickSessionQuestions,
   sessionQuestionCount,
 } from './data/questionBank'
-import thinkingIslandArt from './assets/illustrations/thinking-island.png'
 import thinkingPathArt from './assets/illustrations/thinking-path.webp'
 import type {
   ActivityStore,
@@ -1156,18 +1155,20 @@ function App() {
         </header>
 
         <section className="result-panel" aria-live="polite">
-          <div className="result-prize" aria-hidden="true">
-            <img className="result-mascot-art" src={thinkingIslandArt} alt="" />
+          <div className="result-map" aria-hidden="true">
+            <img className="result-map-art" src={thinkingPathArt} alt="" />
             <span className="result-icon">
               <Trophy size={44} strokeWidth={2.2} />
             </span>
           </div>
-          <p className="eyebrow">完成啦</p>
-          <h2>{score} / {trackQuestions.length}</h2>
-          <p className="result-message">{isReviewSession ? '这组重练做完啦。' : '这组练习做完啦。'}</p>
-          {!isReviewSession && sessionWrongQuestionIds.length > 0 && (
-            <p className="result-parent-note">错题已放进家长记录。</p>
-          )}
+          <div className="result-score-card">
+            <p className="eyebrow">完成啦</p>
+            <h2>{score} / {trackQuestions.length}</h2>
+            <p className="result-message">{isReviewSession ? '这组重练做完啦。' : '这组练习做完啦。'}</p>
+            {!isReviewSession && sessionWrongQuestionIds.length > 0 && (
+              <p className="result-parent-note">错题已放进家长记录。</p>
+            )}
+          </div>
           <div className="result-actions">
             {sessionWrongQuestionIds.length > 0 && (
               <button
