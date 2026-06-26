@@ -173,7 +173,22 @@
   flex-wrap: wrap;
 }
 
+.top-actions {
+  padding: 5px;
+  border: 2px solid rgba(76, 56, 47, 0.18);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 5px 0 rgba(76, 56, 47, 0.08);
+}
+
+:root[data-theme='night'] .top-actions {
+  border-color: rgba(255, 244, 222, 0.18);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18);
+}
+
 .small-tool-button {
+  position: relative;
+  overflow: hidden;
   min-height: 44px;
   padding: 0 14px;
   border: 2px solid var(--ink);
@@ -188,6 +203,10 @@
   gap: 7px;
   font-size: 15px;
   font-weight: 950;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
 }
 
 .small-tool-button:active {
@@ -203,6 +222,32 @@
 .theme-toggle,
 .theme-icon-button {
   background: var(--sky-soft);
+}
+
+.theme-toggle {
+  min-width: 94px;
+}
+
+.theme-toggle::after,
+.theme-icon-button::after {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sun);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.32);
+  content: '';
+  pointer-events: none;
+}
+
+.theme-toggle.is-night::after,
+.theme-icon-button.is-night::after {
+  background: var(--sun-soft);
+  box-shadow:
+    -4px 2px 0 0 var(--sky-soft),
+    0 0 0 2px rgba(255, 255, 255, 0.16);
 }
 
 :root[data-theme='night'] .theme-toggle,
@@ -247,15 +292,15 @@
 .home-hero {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
-  padding: clamp(22px, 4.2vh, 38px) 0 18px;
+  padding: clamp(24px, 4.4vh, 42px) 0 18px;
   display: grid;
-  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  grid-template-columns: minmax(260px, 0.68fr) minmax(0, 1.32fr);
   gap: 34px;
   align-items: center;
 }
 
 .age-copy {
-  min-height: 220px;
+  min-height: 244px;
   padding: 8px 0 12px;
   display: flex;
   flex-direction: column;
@@ -300,17 +345,17 @@
 
 .home-mascot {
   position: relative;
-  width: min(230px, 100%);
-  height: 92px;
-  margin-top: 24px;
+  width: min(260px, 100%);
+  height: 108px;
+  margin-top: 28px;
 }
 
 .mascot-island {
   position: absolute;
   left: 4px;
   bottom: 8px;
-  width: 190px;
-  height: 72px;
+  width: 220px;
+  height: 82px;
   border: 2px solid var(--ink);
   border-radius: 999px 999px 18px 18px;
   background:
@@ -336,7 +381,7 @@
 
 .mascot-island i {
   position: absolute;
-  top: 27px;
+  top: 31px;
   width: 9px;
   height: 9px;
   border-radius: 999px;
@@ -344,18 +389,18 @@
 }
 
 .mascot-island i:first-child {
-  left: 75px;
+  left: 88px;
 }
 
 .mascot-island i:nth-child(2) {
-  left: 109px;
+  left: 126px;
 }
 
 .mascot-island b {
   position: absolute;
-  left: 86px;
-  top: 44px;
-  width: 24px;
+  left: 101px;
+  top: 50px;
+  width: 27px;
   height: 10px;
   border-bottom: 3px solid var(--coral);
   border-radius: 0 0 999px 999px;
@@ -407,13 +452,35 @@
 }
 
 .age-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
+.age-grid::before {
+  position: absolute;
+  right: -18px;
+  left: -18px;
+  top: 50%;
+  z-index: 0;
+  height: 56px;
+  border-top: 3px dashed rgba(76, 56, 47, 0.16);
+  border-bottom: 3px dashed rgba(76, 56, 47, 0.12);
+  border-radius: 999px;
+  content: '';
+  opacity: 0.72;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(-2deg);
+}
+
+:root[data-theme='night'] .age-grid::before {
+  border-color: rgba(255, 244, 222, 0.18);
+}
+
 .age-card {
   position: relative;
+  z-index: 1;
   min-height: 196px;
   padding: 18px;
   border: 2px solid var(--ink);
@@ -473,7 +540,7 @@
 }
 
 .age-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px) rotate(-0.5deg);
   box-shadow: 0 11px 0 var(--ink-soft);
 }
 
@@ -570,7 +637,7 @@
 .practice-preview {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
-  padding: 8px 0 0;
+  padding: 10px 0 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 0.44fr);
   gap: 14px;
@@ -666,6 +733,8 @@
 }
 
 .icon-button {
+  position: relative;
+  overflow: hidden;
   width: 46px;
   height: 46px;
   border: 2px solid var(--ink);
@@ -3354,7 +3423,8 @@
   }
 
   .top-actions {
-    gap: 8px;
+    gap: 5px;
+    padding: 4px;
     flex-wrap: nowrap;
   }
 
@@ -3378,12 +3448,22 @@
   }
 
   .top-actions .small-tool-button {
-    width: 38px;
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
     padding: 0;
   }
 
   .top-actions .small-tool-button span {
     display: none;
+  }
+
+  .theme-toggle::after,
+  .theme-icon-button::after {
+    top: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
   }
 
   .age-copy h2,
@@ -3393,22 +3473,29 @@
   }
 
   .age-big {
-    font-size: 36px;
+    font-size: 34px;
   }
 
   .age-label {
-    margin-top: 6px;
-    font-size: 14px;
+    margin-top: 0;
+    font-size: 18px;
   }
 
-  .age-focus,
   .age-meta {
     display: none;
   }
 
+  .age-focus {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.25;
+  }
+
   .home-hero {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
     padding-top: 14px;
     padding-bottom: 0;
   }
@@ -3419,15 +3506,17 @@
   }
 
   .home-mascot {
-    width: 168px;
-    height: 54px;
-    margin-top: 12px;
+    width: 100%;
+    height: 58px;
+    margin-top: 10px;
   }
 
   .mascot-island {
+    left: 50%;
     width: 132px;
     height: 46px;
     border-width: 3px;
+    transform: translateX(-50%);
   }
 
   .mascot-island::before {
@@ -3463,19 +3552,46 @@
   }
 
   .age-grid {
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .age-grid::before {
+    top: 10px;
+    bottom: 10px;
+    left: 27px;
+    right: auto;
+    width: 0;
+    height: auto;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 4px dotted rgba(76, 56, 47, 0.2);
+    border-radius: 0;
+    transform: none;
+  }
+
+  :root[data-theme='night'] .age-grid::before {
+    border-left-color: rgba(255, 244, 222, 0.2);
   }
 
   .age-card {
-    min-height: 110px;
-    padding: 12px;
+    min-height: 86px;
+    padding: 11px 82px 11px 14px;
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: 12px;
   }
 
   .age-card::before {
-    top: 10px;
-    right: 10px;
-    width: 24px;
-    height: 24px;
+    top: 50%;
+    right: 52px;
+    width: 22px;
+    height: 22px;
+    transform: translateY(-50%);
   }
 
   .age-card svg {
@@ -3483,10 +3599,29 @@
   }
 
   .age-card::after {
-    right: 10px;
-    bottom: 10px;
+    top: 50%;
+    right: 11px;
+    bottom: auto;
     padding: 5px 9px;
     font-size: 12px;
+    transform: translateY(-50%);
+  }
+
+  .age-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .age-card:active {
+    transform: translateY(2px);
+  }
+
+  .age-big {
+    grid-row: 1 / span 2;
+  }
+
+  .age-label,
+  .age-focus {
+    grid-column: 2;
   }
 
   .mini-badges span {
@@ -3495,20 +3630,42 @@
   }
 
   .practice-preview {
-    display: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-top: 10px;
   }
 
   .preview-stage {
-    min-height: 142px;
+    min-height: 76px;
+    overflow: hidden;
   }
 
   .preview-note {
-    padding: 14px;
-    font-size: 15px;
+    display: none;
   }
 
   .friendly-face {
     display: none;
+  }
+
+  .preview-stage .visual-row {
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .preview-stage .shape-tile {
+    width: 48px;
+    height: 48px;
+    font-size: 17px;
+  }
+
+  .preview-stage .shape-triangle {
+    width: 0;
+    height: 0;
+    border-right-width: 28px;
+    border-bottom-width: 50px;
+    border-left-width: 28px;
   }
 
   .shape-tile {
@@ -3680,5 +3837,54 @@
 
   .result-panel h2 {
     font-size: 52px;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    gap: 8px;
+  }
+
+  .brand-lockup {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .brand-lockup h1 {
+    max-width: 86px;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+
+  .brand-lockup p {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+  }
+
+  .top-actions {
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .top-actions .small-tool-button {
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .top-actions .small-tool-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .theme-toggle::after {
+    width: 5px;
+    height: 5px;
   }
 }

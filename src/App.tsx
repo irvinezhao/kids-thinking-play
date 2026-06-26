@@ -894,7 +894,8 @@ function App() {
             </button>
             <button
               aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
-              className="small-tool-button theme-toggle"
+              aria-pressed={themeMode === 'night'}
+              className={`small-tool-button theme-toggle is-${themeMode}`}
               type="button"
               onClick={toggleTheme}
             >
@@ -1161,9 +1162,10 @@ function App() {
             {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
           </button>
           <button
-            className="icon-button theme-icon-button"
+            className={`icon-button theme-icon-button is-${themeMode}`}
             type="button"
             onClick={toggleTheme}
+            aria-pressed={themeMode === 'night'}
             aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
           >
             {themeMode === 'day' ? <Sun size={21} aria-hidden="true" /> : <Moon size={21} aria-hidden="true" />}
@@ -1233,9 +1235,10 @@ function App() {
           {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
         </button>
         <button
-          className="icon-button theme-icon-button"
+          className={`icon-button theme-icon-button is-${themeMode}`}
           type="button"
           onClick={toggleTheme}
+          aria-pressed={themeMode === 'night'}
           aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
         >
           {themeMode === 'day' ? <Sun size={21} aria-hidden="true" /> : <Moon size={21} aria-hidden="true" />}
