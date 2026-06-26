@@ -229,6 +229,48 @@
   min-width: 94px;
 }
 
+.voice-toggle-button {
+  background: var(--mint);
+}
+
+.voice-toggle-button b {
+  display: none;
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.voice-toggle-button.is-cute_boy {
+  background: var(--sky-soft);
+}
+
+.voice-toggle-button.is-lovely_girl {
+  background: var(--peach);
+}
+
+.font-toggle-button {
+  background: var(--sun-soft);
+}
+
+.font-toggle-button b {
+  display: none;
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.font-toggle-button.is-jinnian {
+  background: var(--sun-soft);
+}
+
+.font-toggle-button.is-pingfang {
+  background: var(--mint);
+}
+
+.font-toggle-button.is-qingsong {
+  background: var(--sky-soft);
+}
+
 .theme-toggle::after,
 .theme-icon-button::after {
   position: absolute;
@@ -545,6 +587,7 @@
 
 .age-grid {
   position: relative;
+  margin-top: 90px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
@@ -574,7 +617,7 @@
   position: relative;
   z-index: 1;
   min-height: 196px;
-  padding: 18px;
+  padding: 16px;
   border: 2px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-main);
@@ -582,53 +625,16 @@
   box-shadow: 0 7px 0 var(--ink-soft);
   cursor: pointer;
   text-align: left;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  align-content: start;
+  align-items: start;
+  justify-items: stretch;
   transition:
     transform 150ms ease,
     box-shadow 150ms ease,
     background 150ms ease;
   overflow: hidden;
-}
-
-.age-card::before {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 34px;
-  height: 34px;
-  content: '';
-  background: currentColor;
-  clip-path: polygon(
-    50% 0%,
-    61% 34%,
-    98% 35%,
-    68% 56%,
-    79% 91%,
-    50% 70%,
-    21% 91%,
-    32% 56%,
-    2% 35%,
-    39% 34%
-  );
-  opacity: 0.85;
-}
-
-.age-card::after {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  padding: 6px 12px;
-  border: 2px solid var(--story-line);
-  border-radius: 999px;
-  color: var(--text-strong);
-  background: var(--paper);
-  box-shadow: 0 3px 0 var(--ink-soft);
-  content: '开始';
-  font-size: 14px;
-  font-weight: 950;
 }
 
 .age-card:hover {
@@ -652,13 +658,6 @@
 .wrong-retry-button:focus-visible {
   outline: 4px solid var(--focus);
   outline-offset: 4px;
-}
-
-.age-card svg {
-  position: absolute;
-  right: 74px;
-  bottom: 22px;
-  color: var(--text-strong);
 }
 
 .tone-border-coral {
@@ -694,16 +693,61 @@
   background: linear-gradient(180deg, var(--sky-card-top), var(--sky-soft));
 }
 
+.age-topline {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .age-big {
   color: var(--text-strong);
-  font-size: 54px;
   font-weight: 950;
-  line-height: 1;
+  line-height: 0.92;
   letter-spacing: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.age-number {
+  font-size: 50px;
+}
+
+.age-unit {
+  margin-left: 1px;
+  font-size: 39px;
+}
+
+.age-star {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  margin-top: 5px;
+  background: currentColor;
+  clip-path: polygon(
+    50% 0%,
+    61% 34%,
+    98% 35%,
+    68% 56%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 56%,
+    2% 35%,
+    39% 34%
+  );
+  opacity: 0.9;
 }
 
 .age-label {
   margin-top: 8px;
+  min-width: 0;
+  max-width: 100%;
   color: var(--text-strong);
   font-size: 23px;
   font-weight: 950;
@@ -712,6 +756,8 @@
 
 .age-focus {
   margin-top: 8px;
+  min-width: 0;
+  max-width: 100%;
   color: var(--text-main);
   font-size: 15px;
   font-weight: 750;
@@ -720,8 +766,9 @@
 
 .age-toys {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 14px;
-  padding-right: 58px;
   display: block;
 }
 
@@ -747,11 +794,49 @@
 }
 
 .age-meta {
-  margin-top: auto;
-  padding-top: 12px;
-  padding-right: 40px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   font-size: 14px;
   font-weight: 850;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.age-footer {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.age-start-cue {
+  align-self: flex-end;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 5px 11px;
+  border: 2px solid var(--story-line);
+  border-radius: 999px;
+  color: var(--text-strong);
+  background: var(--paper);
+  box-shadow: 0 3px 0 var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.age-start-cue svg {
+  flex: 0 0 auto;
+  color: var(--text-strong);
 }
 
 .practice-preview {
@@ -1152,9 +1237,17 @@
   padding: 16px 0 10px;
 }
 
+.question-heading {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .skill-chip {
   width: fit-content;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   padding: 8px 12px;
   border: 2px solid var(--story-line);
   border-radius: 999px;
@@ -1171,6 +1264,27 @@
 .skill-chip svg {
   color: var(--sun);
   fill: var(--sun);
+}
+
+.question-voice-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 2px solid var(--story-line);
+  border-radius: 999px;
+  color: var(--text-strong);
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--ink-soft);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.question-voice-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--ink-soft);
 }
 
 .question-stage {
@@ -2516,6 +2630,11 @@
   z-index: 1;
 }
 
+.option-grid.option-count-2 {
+  grid-template-columns: repeat(2, minmax(150px, 280px));
+  justify-content: center;
+}
+
 .option-grid::before {
   position: absolute;
   inset: -10px -12px -12px;
@@ -3267,6 +3386,11 @@
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.result-actions .primary-button,
+.result-actions .secondary-button {
+  flex: 0 1 auto;
 }
 
 .panel-screen {
@@ -4246,12 +4370,36 @@
   }
 
   .age-grid {
+    margin-top: 0;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .age-card {
     min-height: 150px;
     padding: 14px;
+  }
+
+  .age-number {
+    font-size: 43px;
+  }
+
+  .age-unit {
+    font-size: 33px;
+  }
+
+  .age-star {
+    width: 26px;
+    height: 26px;
+  }
+
+  .age-meta {
+    font-size: 12px;
+  }
+
+  .age-start-cue {
+    min-height: 30px;
+    padding: 5px 9px;
+    font-size: 12px;
   }
 
   .practice-preview {
@@ -4650,26 +4798,32 @@
 
   .topbar {
     padding-top: 14px;
-    gap: 10px;
+    gap: 8px;
   }
 
   .top-actions {
-    gap: 5px;
-    padding: 4px;
+    gap: 3px;
+    padding: 3px;
     flex-wrap: nowrap;
   }
 
+  .brand-lockup {
+    gap: 10px;
+  }
+
   .brand-lockup h1 {
-    font-size: 23px;
+    font-size: 20px;
+    white-space: nowrap;
   }
 
   .brand-lockup p {
-    font-size: 13px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .brand-mark {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
   }
 
   .small-tool-button {
@@ -4679,13 +4833,23 @@
   }
 
   .top-actions .small-tool-button {
-    width: 36px;
-    min-width: 36px;
-    min-height: 36px;
+    width: 29px;
+    min-width: 29px;
+    min-height: 32px;
     padding: 0;
   }
 
   .top-actions .small-tool-button span {
+    display: none;
+  }
+
+  .top-actions .voice-toggle-button b,
+  .top-actions .font-toggle-button b {
+    display: inline;
+  }
+
+  .top-actions .voice-toggle-button svg,
+  .top-actions .font-toggle-button svg {
     display: none;
   }
 
@@ -4840,34 +5004,13 @@
 
   .age-card {
     min-height: 90px;
-    padding: 10px 82px 10px 14px;
+    padding: 10px 12px 10px 14px;
     display: grid;
-    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto;
     align-content: center;
     align-items: center;
     column-gap: 12px;
-  }
-
-  .age-card::before {
-    top: 50%;
-    right: 52px;
-    width: 22px;
-    height: 22px;
-    transform: translateY(-50%);
-  }
-
-  .age-card svg {
-    display: none;
-  }
-
-  .age-card::after {
-    top: 50%;
-    right: 11px;
-    bottom: auto;
-    padding: 5px 9px;
-    font-size: 12px;
-    transform: translateY(-50%);
   }
 
   .age-card:hover {
@@ -4878,14 +5021,53 @@
     transform: translateY(2px);
   }
 
-  .age-big {
+  .age-topline {
+    width: auto;
+    grid-column: 1;
     grid-row: 1 / span 3;
+    flex-direction: column;
+    justify-content: center;
+    align-self: stretch;
+    gap: 4px;
+  }
+
+  .age-number {
+    font-size: 38px;
+  }
+
+  .age-unit {
+    font-size: 29px;
+  }
+
+  .age-star {
+    display: none;
   }
 
   .age-label,
   .age-focus,
   .age-toys {
     grid-column: 2;
+  }
+
+  .age-footer {
+    width: auto;
+    margin-top: 0;
+    grid-column: 3;
+    grid-row: 1 / span 3;
+    align-self: center;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .age-start-cue {
+    min-height: 31px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+
+  .age-start-cue svg {
+    display: none;
   }
 
   .age-toys {
@@ -5235,21 +5417,38 @@
 
   .result-actions {
     margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .result-actions .primary-button,
+  .result-actions .secondary-button {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 10px;
+    font-size: 16px;
   }
 }
 
 @media (max-width: 360px) {
   .topbar {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .result-actions .primary-button,
+  .result-actions .secondary-button {
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .brand-lockup {
     min-width: 0;
-    gap: 8px;
+    gap: 6px;
   }
 
   .brand-lockup h1 {
-    max-width: 86px;
+    max-width: 68px;
     font-size: 18px;
     white-space: nowrap;
   }
@@ -5259,21 +5458,21 @@
   }
 
   .brand-mark {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     flex: 0 0 auto;
   }
 
   .top-actions {
     flex: 0 0 auto;
-    gap: 4px;
-    padding: 3px;
+    gap: 2px;
+    padding: 2px;
   }
 
   .top-actions .small-tool-button {
-    width: 32px;
-    min-width: 32px;
-    min-height: 32px;
+    width: 26px;
+    min-width: 26px;
+    min-height: 30px;
   }
 
   .top-actions .small-tool-button svg {
@@ -5451,6 +5650,18 @@
   .quiz-screen .quiz-title {
     gap: 5px;
     padding: 0 4px;
+  }
+
+  .question-heading {
+    margin-bottom: 8px;
+    gap: 7px;
+  }
+
+  .skill-chip,
+  .question-voice-button {
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 13px;
   }
 
   .quiz-title span,

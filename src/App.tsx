@@ -12,6 +12,7 @@ import {
   Star,
   Sun,
   Trophy,
+  Type,
   Upload,
   Volume2,
   VolumeX,
@@ -37,6 +38,10 @@ import {
 } from './data/questionBank'
 import brandLogoArt from './assets/brand/thinking-island-logo.webp'
 import thinkingPathArt from './assets/illustrations/thinking-path.webp'
+import sceneCastleArt from './assets/scenes/kenney-castle.webp'
+import sceneDesertArt from './assets/scenes/kenney-desert.webp'
+import sceneForestArt from './assets/scenes/kenney-forest.webp'
+import sceneTallTreesArt from './assets/scenes/kenney-talltrees.webp'
 import type {
   ActivityStore,
   AgeKey,
@@ -55,6 +60,7 @@ import './App.css'
 
 type ScreenMode = 'home' | 'parent' | 'admin'
 type ThemeMode = 'day' | 'night'
+type AppFontId = 'jinnian' | 'pingfang' | 'qingsong'
 type SessionAnswer = {
   questionId: string
   optionId: string
@@ -78,14 +84,40 @@ type PromptVoiceManifest = {
   cloudTtsUrlTemplate?: string
   entries?: Record<string, string>
   prompts?: Record<string, string>
+  defaultVoice?: PromptVoiceId
+  feedback?: Partial<Record<PromptVoiceId, Record<string, string>>>
+  voices?: Partial<Record<PromptVoiceId, PromptVoicePack>>
+}
+type PromptVoiceId = 'cute_boy' | 'lovely_girl'
+type PromptVoicePack = {
+  label?: string
+  entries?: Record<string, string>
+  prompts?: Record<string, string>
+  feedback?: Record<string, string>
 }
 
 const progressStorageKey = 'kids-thinking-play-progress'
 const activityStorageKey = 'kids-thinking-play-activity'
 const importedStorageKey = 'kids-thinking-play-imported-questions'
+const recentQuestionStorageKey = 'kids-thinking-play-recent-question-ids'
 const soundStorageKey = 'kids-thinking-play-sound-enabled'
 const themeStorageKey = 'kids-thinking-play-theme-mode'
+const promptVoiceStorageKey = 'kids-thinking-play-prompt-voice'
+const appFontStorageKey = 'kids-thinking-play-app-font'
+const recentQuestionLimit = 80
 const validAges: AgeKey[] = ['age2', 'age3', 'age4']
+const validPromptVoices: PromptVoiceId[] = ['lovely_girl', 'cute_boy']
+const validAppFonts: AppFontId[] = ['jinnian', 'pingfang', 'qingsong']
+const promptVoiceProfiles: Record<PromptVoiceId, { label: string; short: string }> = {
+  lovely_girl: { label: '萌萌女童', short: '女' },
+  cute_boy: { label: '可爱男童', short: '男' },
+}
+const appFontProfiles: Record<AppFontId, { label: string; short: string }> = {
+  jinnian: { label: '今年加油体', short: '加' },
+  pingfang: { label: '平方手书体', short: '手' },
+  qingsong: { label: '轻松手写体', short: '轻' },
+}
+const sceneArtGallery = [thinkingPathArt, sceneForestArt, sceneCastleArt, sceneDesertArt, sceneTallTreesArt] as const
 const ageCardVisuals: Record<AgeKey, VisualToken[]> = {
   age2: [
     { shape: 'circle', tone: 'coral', item: 'apple', small: true },
@@ -214,9 +246,44 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+type RecentQuestionStore = Partial<Record<AgeKey, string[]>>
+
+function createSessionSeed() {
+  return Date.now() + Math.floor(Math.random() * 1_000_000)
+}
+
+function readRecentQuestionIds(age: AgeKey) {
+  const store = readJson<RecentQuestionStore>(recentQuestionStorageKey, {})
+  return Array.isArray(store[age]) ? store[age] : []
+}
+
+function rememberRecentQuestionIds(age: AgeKey, questionIds: string[]) {
+  if (!questionIds.length) return
+  const store = readJson<RecentQuestionStore>(recentQuestionStorageKey, {})
+  const incomingIds = new Set(questionIds)
+  const existingIds = Array.isArray(store[age]) ? store[age] : []
+  const nextIds = [...questionIds, ...existingIds.filter((id) => !incomingIds.has(id))].slice(0, recentQuestionLimit)
+  window.localStorage.setItem(recentQuestionStorageKey, JSON.stringify({ ...store, [age]: nextIds }))
+}
+
+function pickSceneArt(seed: number, offset = 0) {
+  const index = Math.abs(seed + offset) % sceneArtGallery.length
+  return sceneArtGallery[index]
+}
+
 function readThemeMode(): ThemeMode {
   const stored = readJson<ThemeMode | null>(themeStorageKey, null)
   return stored === 'night' || stored === 'day' ? stored : 'day'
+}
+
+function readPromptVoice(): PromptVoiceId {
+  const stored = readJson<PromptVoiceId | null>(promptVoiceStorageKey, null)
+  return stored && validPromptVoices.includes(stored) ? stored : 'lovely_girl'
+}
+
+function readAppFont(): AppFontId {
+  const stored = readJson<AppFontId | null>(appFontStorageKey, null)
+  return stored && validAppFonts.includes(stored) ? stored : 'jinnian'
 }
 
 function localDateKey(value: string | Date) {
@@ -359,7 +426,7 @@ function playFeedbackSound(correct: boolean) {
   }
 }
 
-function playAnswerFeedback(correct: boolean) {
+function playAnswerFeedbackTone(correct: boolean) {
   playFeedbackSound(correct)
 }
 
@@ -367,25 +434,56 @@ function getPromptVoiceManifestUrl() {
   return new URL(promptVoiceManifestFile, window.location.href).toString()
 }
 
-function applyTtsUrlTemplate(template: string, question: Question) {
+function applyTtsUrlTemplate(template: string, question: Question, voice: PromptVoiceId) {
   const replacements: Record<string, string> = {
     id: question.id,
     text: question.prompt,
     prompt: question.prompt,
     age: question.age,
     skill: question.skill,
+    voice,
   }
-  return template.replace(/\{(id|text|prompt|age|skill)\}/g, (_, key: string) =>
+  return template.replace(/\{(id|text|prompt|age|skill|voice)\}/g, (_, key: string) =>
     encodeURIComponent(replacements[key] ?? ''),
   )
 }
 
-function resolvePromptAudioUrl(question: Question, manifest: PromptVoiceManifest | null, manifestBaseUrl: string) {
+function resolvePromptAudioUrl(
+  question: Question,
+  manifest: PromptVoiceManifest | null,
+  manifestBaseUrl: string,
+  voice: PromptVoiceId,
+) {
   if (!manifest) return null
-  const directUrl = manifest.entries?.[question.id] ?? manifest.prompts?.[question.prompt]
+  const selectedVoice = manifest.voices?.[voice]
+  const fallbackVoice = manifest.defaultVoice ? manifest.voices?.[manifest.defaultVoice] : null
+  const directUrl =
+    selectedVoice?.entries?.[question.id] ??
+    selectedVoice?.prompts?.[question.prompt] ??
+    fallbackVoice?.entries?.[question.id] ??
+    fallbackVoice?.prompts?.[question.prompt] ??
+    manifest.entries?.[question.id] ??
+    manifest.prompts?.[question.prompt]
   if (directUrl) return new URL(directUrl, manifestBaseUrl).toString()
-  if (manifest.cloudTtsUrlTemplate) return applyTtsUrlTemplate(manifest.cloudTtsUrlTemplate, question)
+  if (manifest.cloudTtsUrlTemplate) return applyTtsUrlTemplate(manifest.cloudTtsUrlTemplate, question, voice)
   return null
+}
+
+function resolveFeedbackAudioUrl(
+  feedbackId: string,
+  manifest: PromptVoiceManifest | null,
+  manifestBaseUrl: string,
+  voice: PromptVoiceId,
+) {
+  if (!manifest) return null
+  const selectedVoice = manifest.voices?.[voice]
+  const fallbackVoice = manifest.defaultVoice ? manifest.voices?.[manifest.defaultVoice] : null
+  const directUrl =
+    selectedVoice?.feedback?.[feedbackId] ??
+    manifest.feedback?.[voice]?.[feedbackId] ??
+    fallbackVoice?.feedback?.[feedbackId] ??
+    (manifest.defaultVoice ? manifest.feedback?.[manifest.defaultVoice]?.[feedbackId] : undefined)
+  return directUrl ? new URL(directUrl, manifestBaseUrl).toString() : null
 }
 
 function canUseSpeechSynthesis() {
@@ -601,8 +699,11 @@ function App() {
   const [importMessage, setImportMessage] = useState('还没有导入内容。')
   const [soundEnabled, setSoundEnabled] = useState(() => readJson(soundStorageKey, true))
   const [themeMode, setThemeMode] = useState<ThemeMode>(readThemeMode)
+  const [promptVoice, setPromptVoice] = useState<PromptVoiceId>(readPromptVoice)
+  const [appFont, setAppFont] = useState<AppFontId>(readAppFont)
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[] | null>(null)
   const [sessionWrongQuestionIds, setSessionWrongQuestionIds] = useState<string[]>([])
+  const [sessionAvoidQuestionIds, setSessionAvoidQuestionIds] = useState<string[]>([])
   const [activeGesture, setActiveGestureState] = useState<ActiveOptionGesture | null>(null)
   const finishRecordedRef = useRef(false)
   const sessionStartedAtRef = useRef<number | null>(null)
@@ -611,6 +712,7 @@ function App() {
   const suppressOptionClickRef = useRef(false)
   const questionSpeechTimerRef = useRef<number | null>(null)
   const questionAudioRef = useRef<HTMLAudioElement | null>(null)
+  const feedbackAudioRef = useRef<HTMLAudioElement | null>(null)
   const promptVoiceManifestRef = useRef<PromptVoiceManifest | null>(null)
   const promptVoiceManifestBaseRef = useRef('')
   const speechVoicesRef = useRef<SpeechSynthesisVoice[]>([])
@@ -624,13 +726,22 @@ function App() {
       .filter((question): question is Question => Boolean(question))
   }, [questionPool, reviewQuestionIds])
   const trackQuestions = useMemo(
-    () => reviewQuestions ?? (selectedAge ? pickSessionQuestions(questionPool, selectedAge, sessionSeed) : []),
-    [questionPool, reviewQuestions, selectedAge, sessionSeed],
+    () =>
+      reviewQuestions ??
+      (selectedAge ? pickSessionQuestions(questionPool, selectedAge, sessionSeed, sessionAvoidQuestionIds) : []),
+    [questionPool, reviewQuestions, selectedAge, sessionAvoidQuestionIds, sessionSeed],
   )
   const currentQuestion = trackQuestions[questionIndex] ?? null
   const score = answers.length
   const finished = selectedAge !== null && questionIndex >= trackQuestions.length
   const isReviewSession = Boolean(reviewQuestionIds)
+  const promptVoiceProfile = promptVoiceProfiles[promptVoice]
+  const appFontProfile = appFontProfiles[appFont]
+  const homeSceneArt = thinkingPathArt
+  const sessionSceneArt = selectedAge
+    ? pickSceneArt(sessionSeed, questionIndex + validAges.indexOf(selectedAge) * 2)
+    : homeSceneArt
+  const resultSceneArt = selectedAge ? pickSceneArt(sessionSeed, score + 4) : homeSceneArt
 
   useEffect(() => {
     window.localStorage.setItem(progressStorageKey, JSON.stringify(progress))
@@ -652,6 +763,15 @@ function App() {
     document.documentElement.dataset.theme = themeMode
     window.localStorage.setItem(themeStorageKey, JSON.stringify(themeMode))
   }, [themeMode])
+
+  useEffect(() => {
+    window.localStorage.setItem(promptVoiceStorageKey, JSON.stringify(promptVoice))
+  }, [promptVoice])
+
+  useEffect(() => {
+    document.documentElement.dataset.font = appFont
+    window.localStorage.setItem(appFontStorageKey, JSON.stringify(appFont))
+  }, [appFont])
 
   useEffect(() => {
     let cancelled = false
@@ -707,9 +827,17 @@ function App() {
     }
   }, [])
 
+  const stopFeedbackSpeech = useCallback(() => {
+    if (feedbackAudioRef.current) {
+      feedbackAudioRef.current.pause()
+      feedbackAudioRef.current.currentTime = 0
+      feedbackAudioRef.current = null
+    }
+  }, [])
+
   const speakQuestionWithSystemVoice = useCallback(
-    (question: Question | null) => {
-      if (!question || !soundEnabled || !shouldPlayFeedbackAudio || !canUseSpeechSynthesis()) return
+    (question: Question | null, force = false) => {
+      if (!question || (!soundEnabled && !force) || !shouldPlayFeedbackAudio || !canUseSpeechSynthesis()) return
 
       try {
         const voices = speechVoicesRef.current.length
@@ -733,14 +861,15 @@ function App() {
   )
 
   const speakQuestionPrompt = useCallback(
-    (question: Question | null) => {
-      if (!question || !soundEnabled || !shouldPlayFeedbackAudio) return
+    (question: Question | null, force = false) => {
+      if (!question || (!soundEnabled && !force) || !shouldPlayFeedbackAudio) return
 
       stopQuestionSpeech()
       const audioUrl = resolvePromptAudioUrl(
         question,
         promptVoiceManifestRef.current,
         promptVoiceManifestBaseRef.current || getPromptVoiceManifestUrl(),
+        promptVoice,
       )
 
       if (audioUrl) {
@@ -751,7 +880,7 @@ function App() {
           void audio.play().catch(() => {
             if (questionAudioRef.current === audio) {
               questionAudioRef.current = null
-              speakQuestionWithSystemVoice(question)
+              speakQuestionWithSystemVoice(question, force)
             }
           })
           return
@@ -760,9 +889,41 @@ function App() {
         }
       }
 
-      speakQuestionWithSystemVoice(question)
+      speakQuestionWithSystemVoice(question, force)
     },
-    [soundEnabled, speakQuestionWithSystemVoice, stopQuestionSpeech],
+    [promptVoice, soundEnabled, speakQuestionWithSystemVoice, stopQuestionSpeech],
+  )
+
+  const playAnswerFeedback = useCallback(
+    (correct: boolean, force = false) => {
+      if ((!soundEnabled && !force) || !shouldPlayFeedbackAudio) return
+
+      stopFeedbackSpeech()
+      playAnswerFeedbackTone(correct)
+      const feedbackId = correct ? 'answer-correct' : 'answer-wrong'
+      const audioUrl = resolveFeedbackAudioUrl(
+        feedbackId,
+        promptVoiceManifestRef.current,
+        promptVoiceManifestBaseRef.current || getPromptVoiceManifestUrl(),
+        promptVoice,
+      )
+
+      if (!audioUrl) return
+
+      try {
+        const audio = new Audio(audioUrl)
+        audio.preload = 'auto'
+        feedbackAudioRef.current = audio
+        void audio.play().catch(() => {
+          if (feedbackAudioRef.current === audio) {
+            feedbackAudioRef.current = null
+          }
+        })
+      } catch {
+        // The tone feedback already played; recorded feedback is optional.
+      }
+    },
+    [promptVoice, soundEnabled, stopFeedbackSpeech],
   )
 
   useEffect(() => {
@@ -790,8 +951,26 @@ function App() {
     setThemeMode((mode) => (mode === 'day' ? 'night' : 'day'))
   }
 
+  function togglePromptVoice() {
+    setPromptVoice((voice) => (voice === 'lovely_girl' ? 'cute_boy' : 'lovely_girl'))
+  }
+
+  function toggleAppFont() {
+    setAppFont((font) => {
+      const index = validAppFonts.indexOf(font)
+      return validAppFonts[(index + 1) % validAppFonts.length]
+    })
+  }
+
+  function replayQuestionPrompt() {
+    if (!currentQuestion) return
+    if (!soundEnabled) setSoundEnabled(true)
+    window.setTimeout(() => speakQuestionPrompt(currentQuestion, true), soundEnabled ? 0 : 50)
+  }
+
   function startTrack(age: AgeKey) {
     stopQuestionSpeech()
+    stopFeedbackSpeech()
     setScreen('home')
     setSelectedAge(age)
     setQuestionIndex(0)
@@ -799,13 +978,15 @@ function App() {
     setPickedOption(null)
     setReviewQuestionIds(null)
     setSessionWrongQuestionIds([])
-    setSessionSeed(Date.now())
+    setSessionAvoidQuestionIds(readRecentQuestionIds(age))
+    setSessionSeed(createSessionSeed())
     finishRecordedRef.current = false
     sessionStartedAtRef.current = Date.now()
   }
 
   function goHome() {
     stopQuestionSpeech()
+    stopFeedbackSpeech()
     setScreen('home')
     setSelectedAge(null)
     setQuestionIndex(0)
@@ -813,6 +994,7 @@ function App() {
     setPickedOption(null)
     setReviewQuestionIds(null)
     setSessionWrongQuestionIds([])
+    setSessionAvoidQuestionIds([])
     finishRecordedRef.current = false
     sessionStartedAtRef.current = null
   }
@@ -820,7 +1002,10 @@ function App() {
   function toggleSound() {
     setSoundEnabled((enabled) => {
       const nextEnabled = !enabled
-      if (!nextEnabled) stopQuestionSpeech()
+      if (!nextEnabled) {
+        stopQuestionSpeech()
+        stopFeedbackSpeech()
+      }
       if (nextEnabled && shouldPlayFeedbackAudio && !currentQuestion) {
         window.setTimeout(() => playFeedbackSound(true), 0)
       }
@@ -833,7 +1018,7 @@ function App() {
       setSoundEnabled(true)
     }
     if (shouldPlayFeedbackAudio) {
-      window.setTimeout(() => playAnswerFeedback(correct), soundEnabled ? 0 : 40)
+      window.setTimeout(() => playAnswerFeedback(correct, true), soundEnabled ? 0 : 40)
     }
   }
 
@@ -845,6 +1030,7 @@ function App() {
     if (!questions.length) return
 
     stopQuestionSpeech()
+    stopFeedbackSpeech()
     setScreen('home')
     setSelectedAge(questions[0].age)
     setQuestionIndex(0)
@@ -852,7 +1038,8 @@ function App() {
     setPickedOption(null)
     setReviewQuestionIds(questions.map((question) => question.id))
     setSessionWrongQuestionIds([])
-    setSessionSeed(Date.now())
+    setSessionAvoidQuestionIds([])
+    setSessionSeed(createSessionSeed())
     finishRecordedRef.current = false
     sessionStartedAtRef.current = Date.now()
   }
@@ -988,6 +1175,7 @@ function App() {
     )
 
     if (!isReviewSession) {
+      rememberRecentQuestionIds(selectedAge, trackQuestions.map((question) => question.id))
       setProgress((existing) => {
         const previous = existing[selectedAge]
         return {
@@ -1130,6 +1318,26 @@ function App() {
             >
               {soundEnabled ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}
               <span>{soundEnabled ? '声音' : '静音'}</span>
+            </button>
+            <button
+              aria-label={`切换题目音色，当前${promptVoiceProfile.label}`}
+              className={`small-tool-button voice-toggle-button is-${promptVoice}`}
+              type="button"
+              onClick={togglePromptVoice}
+            >
+              <Star size={18} aria-hidden="true" />
+              <span>{promptVoiceProfile.label}</span>
+              <b aria-hidden="true">{promptVoiceProfile.short}</b>
+            </button>
+            <button
+              aria-label={`切换字体，当前${appFontProfile.label}`}
+              className={`small-tool-button font-toggle-button is-${appFont}`}
+              type="button"
+              onClick={toggleAppFont}
+            >
+              <Type size={18} aria-hidden="true" />
+              <span>{appFontProfile.label}</span>
+              <b aria-hidden="true">{appFontProfile.short}</b>
             </button>
             <button
               aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
@@ -1312,13 +1520,14 @@ function App() {
                 <p className="eyebrow">选择年龄</p>
                 <h2 id="age-title">今天从哪一组开始？</h2>
                 <div className="home-map-card" aria-hidden="true">
-                  <img className="home-map-art" src={thinkingPathArt} alt="" />
+                  <img className="home-map-art" src={homeSceneArt} alt="" />
                 </div>
               </div>
 
               <div className="age-grid">
                 {ageTracks.map((track) => {
                   const stored = progress[track.key]
+                  const [ageNumber, ageUnit = '岁'] = track.short.split(/\s+/)
                   return (
                     <button
                       className={`age-card tone-border-${track.accent}`}
@@ -1327,16 +1536,27 @@ function App() {
                       type="button"
                       onClick={() => startTrack(track.key)}
                     >
-                      <span className="age-big">{track.short}</span>
+                      <span className="age-topline">
+                        <span className="age-big" aria-hidden="true">
+                          <span className="age-number">{ageNumber}</span>
+                          <span className="age-unit">{ageUnit}</span>
+                        </span>
+                        <span className="age-star" aria-hidden="true" />
+                      </span>
                       <span className="age-label">{track.label}</span>
                       <span className="age-focus">{track.focus}</span>
                       <span className="age-toys" aria-hidden="true">
                         <VisualRow tokens={ageCardVisuals[track.key]} />
                       </span>
-                      <span className="age-meta">
-                        {stored ? `玩过 ${stored.plays} 次` : '新冒险'} · 今日 {sessionQuestionCount} 个小游戏
+                      <span className="age-footer">
+                        <span className="age-meta">
+                          {stored ? `玩过 ${stored.plays} 次` : '新冒险'} · 今日 {sessionQuestionCount} 个小游戏
+                        </span>
+                        <span className="age-start-cue" aria-hidden="true">
+                          <ChevronRight size={18} />
+                          开始
+                        </span>
                       </span>
-                      <ChevronRight size={24} aria-hidden="true" />
                     </button>
                   )
                 })}
@@ -1379,7 +1599,7 @@ function App() {
 
         <section className="result-panel" aria-live="polite">
           <div className="result-map" aria-hidden="true">
-            <img className="result-map-art" src={thinkingPathArt} alt="" />
+            <img className="result-map-art" src={resultSceneArt} alt="" />
             <span className="result-icon">
               <Trophy size={44} strokeWidth={2.2} />
             </span>
@@ -1403,10 +1623,18 @@ function App() {
                 重练错题
               </button>
             )}
-            <button className="primary-button" type="button" onClick={() => startTrack(selectedAge)}>
-              <RotateCcw size={20} aria-hidden="true" />
-              再玩一次
-            </button>
+            {selectedAge && (
+              <>
+                <button className="primary-button" type="button" onClick={() => startTrack(selectedAge)}>
+                  <ChevronRight size={20} aria-hidden="true" />
+                  玩更多
+                </button>
+                <button className="secondary-button" type="button" onClick={() => startTrack(selectedAge)}>
+                  <RotateCcw size={20} aria-hidden="true" />
+                  再玩一次
+                </button>
+              </>
+            )}
             <button className="secondary-button" type="button" onClick={goHome}>
               <Home size={20} aria-hidden="true" />
               换年龄
@@ -1431,7 +1659,7 @@ function App() {
         <span />
         <span />
       </div>
-      <img className="quiz-trail-art" src={thinkingPathArt} alt="" aria-hidden="true" />
+      <img className="quiz-trail-art" src={sessionSceneArt} alt="" aria-hidden="true" />
       <header className="quiz-topbar">
         <button className="icon-button" type="button" onClick={goHome} aria-label="返回年龄选择">
           <ArrowLeft size={22} aria-hidden="true" />
@@ -1468,10 +1696,16 @@ function App() {
       </div>
 
       <div className="quiz-playmat">
-        <section className="question-area">
-          <div className="skill-chip">
-            <Star size={17} aria-hidden="true" />
-            {currentQuestion.skill}
+        <section className="question-area" data-question-id={currentQuestion.id}>
+          <div className="question-heading">
+            <div className="skill-chip">
+              <Star size={17} aria-hidden="true" />
+              {currentQuestion.skill}
+            </div>
+            <button className="question-voice-button" type="button" onClick={replayQuestionPrompt}>
+              {soundEnabled ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
+              {soundEnabled ? '再读题目' : '打开并读题'}
+            </button>
           </div>
           <h2>{currentQuestion.prompt}</h2>
 
@@ -1490,7 +1724,10 @@ function App() {
           </div>
         </section>
 
-        <section className={`option-grid template-${currentQuestion.template}`} aria-label="答案选项">
+        <section
+          className={`option-grid template-${currentQuestion.template} option-count-${currentQuestion.options.length}`}
+          aria-label="答案选项"
+        >
           {currentQuestion.options.map((option) => {
             const isPicked = pickedOption === option.id
             const isCorrect = option.id === currentQuestion.answerId

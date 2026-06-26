@@ -2148,13 +2148,22 @@ function hashQuestion(seed: number, id: string) {
   return hash >>> 0
 }
 
-export function pickSessionQuestions(questions: Question[], age: AgeKey, seed: number) {
+export function pickSessionQuestions(
+  questions: Question[],
+  age: AgeKey,
+  seed: number,
+  avoidQuestionIds: string[] = [],
+) {
   const pool = questions.filter((question) => question.age === age && question.status === 'approved')
   if (pool.length <= sessionQuestionCount) return pool
 
   const picked: Question[] = []
   const skillCounts = new Map<string, number>()
-  const sorted = [...pool].sort((a, b) => hashQuestion(seed, a.id) - hashQuestion(seed, b.id))
+  const avoidSet = new Set(avoidQuestionIds)
+  const freshPool = pool.filter((question) => !avoidSet.has(question.id))
+  const primaryPool = freshPool.length >= sessionQuestionCount ? freshPool : pool
+  const sorted = [...primaryPool].sort((a, b) => hashQuestion(seed, a.id) - hashQuestion(seed, b.id))
+  const fallbackSorted = primaryPool === pool ? sorted : [...pool].sort((a, b) => hashQuestion(seed, a.id) - hashQuestion(seed, b.id))
   const featured = sorted.filter((question) => question.tags.includes('精选')).slice(0, 3)
 
   function addQuestion(question: Question) {
@@ -2172,7 +2181,7 @@ export function pickSessionQuestions(questions: Question[], age: AgeKey, seed: n
     addQuestion(question)
   }
 
-  for (const question of sorted) {
+  for (const question of fallbackSorted) {
     if (picked.length >= sessionQuestionCount) break
     addQuestion(question)
   }
