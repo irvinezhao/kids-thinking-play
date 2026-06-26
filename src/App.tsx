@@ -1340,6 +1340,7 @@ function App() {
 
       {pickedOption && (
         <>
+          <div className={answeredCorrectly ? 'feedback-scrim correct' : 'feedback-scrim wrong'} aria-hidden="true" />
           <FeedbackEffect correct={answeredCorrectly} />
           <section className={answeredCorrectly ? 'feedback correct' : 'feedback wrong'} aria-live="polite">
             <div className="feedback-copy">

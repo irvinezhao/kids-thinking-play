@@ -2716,6 +2716,47 @@
   height: 42px;
 }
 
+.feedback-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 250, 240, 0.78) 0 112px, rgba(255, 250, 240, 0.46) 113px 260px, rgba(255, 250, 240, 0.2) 100%),
+    rgba(255, 250, 240, 0.12);
+  pointer-events: none;
+  animation: scrimBloom 240ms ease-out both;
+}
+
+.feedback-scrim.correct {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(239, 250, 240, 0.88) 0 116px, rgba(223, 245, 223, 0.52) 117px 270px, rgba(255, 250, 240, 0.2) 100%),
+    rgba(255, 250, 240, 0.14);
+}
+
+.feedback-scrim.wrong {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 242, 236, 0.9) 0 116px, rgba(255, 224, 214, 0.52) 117px 270px, rgba(255, 250, 240, 0.2) 100%),
+    rgba(255, 250, 240, 0.14);
+}
+
+:root[data-theme='night'] .feedback-scrim {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(39, 48, 76, 0.88) 0 114px, rgba(39, 48, 76, 0.56) 115px 270px, rgba(23, 28, 49, 0.34) 100%),
+    rgba(23, 28, 49, 0.2);
+}
+
+:root[data-theme='night'] .feedback-scrim.correct {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(36, 84, 62, 0.9) 0 116px, rgba(36, 84, 62, 0.56) 117px 270px, rgba(23, 28, 49, 0.34) 100%),
+    rgba(23, 28, 49, 0.2);
+}
+
+:root[data-theme='night'] .feedback-scrim.wrong {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(98, 55, 47, 0.92) 0 116px, rgba(98, 55, 47, 0.58) 117px 270px, rgba(23, 28, 49, 0.34) 100%),
+    rgba(23, 28, 49, 0.2);
+}
+
 .feedback {
   position: fixed;
   top: 50%;
@@ -2725,11 +2766,11 @@
   overflow: hidden;
   width: min(440px, calc(100% - 40px));
   margin: 0;
-  padding: 24px 20px 18px;
+  padding: 28px 22px 20px;
   border: 3px solid var(--story-line);
   box-shadow:
-    0 10px 0 var(--ink-soft),
-    0 22px 44px rgba(76, 56, 47, 0.18);
+    0 11px 0 var(--ink-soft),
+    0 24px 46px rgba(76, 56, 47, 0.22);
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -2769,13 +2810,17 @@
 .feedback.correct {
   --feedback-ribbon: var(--leaf);
   background:
-    linear-gradient(180deg, var(--leaf-card-top) 0%, var(--mint) 100%);
+    radial-gradient(circle at 16% 24%, rgba(255, 255, 255, 0.78) 0 28px, transparent 29px),
+    radial-gradient(circle at 86% 75%, rgba(255, 241, 191, 0.72) 0 32px, transparent 33px),
+    linear-gradient(180deg, #f9fff8 0%, var(--mint) 100%);
 }
 
 .feedback.wrong {
   --feedback-ribbon: var(--coral);
   background:
-    linear-gradient(180deg, var(--coral-card-top) 0%, var(--coral-soft) 100%);
+    radial-gradient(circle at 16% 24%, rgba(255, 255, 255, 0.78) 0 28px, transparent 29px),
+    radial-gradient(circle at 86% 75%, rgba(223, 242, 255, 0.72) 0 32px, transparent 33px),
+    linear-gradient(180deg, #fffafa 0%, var(--coral-soft) 100%);
   animation:
     feedbackPop 220ms ease-out both,
     feedbackWiggle 360ms ease-out 80ms both;
@@ -2793,14 +2838,19 @@
 }
 
 .feedback-mark {
-  width: 66px;
-  height: 66px;
+  width: 76px;
+  height: 76px;
   border: 3px solid var(--story-line);
   border-radius: 999px;
   background: var(--paper);
   box-shadow:
-    0 7px 0 var(--ink-soft),
-    inset 0 -5px 0 rgba(76, 56, 47, 0.07);
+    0 8px 0 var(--ink-soft),
+    inset 0 -6px 0 rgba(76, 56, 47, 0.07);
+}
+
+.feedback-mark svg {
+  width: 40px;
+  height: 40px;
 }
 
 .feedback-text {
@@ -2812,7 +2862,7 @@
 
 .feedback-text strong {
   color: var(--text-strong);
-  font-size: 25px;
+  font-size: 28px;
   line-height: 1.08;
 }
 
@@ -3735,6 +3785,16 @@
   }
 }
 
+@keyframes scrimBloom {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes feedbackWiggle {
   0%,
   100% {
@@ -3902,6 +3962,7 @@
 
   .auto-hint span::before,
   .feedback,
+  .feedback-scrim,
   .celebration-ring,
   .firework-burst,
   .firework-burst i,
