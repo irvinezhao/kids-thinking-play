@@ -930,7 +930,7 @@ function App() {
         </header>
 
         {screen === 'parent' && (
-          <section className="panel-screen" aria-labelledby="parent-title">
+          <section className="panel-screen parent-screen" aria-labelledby="parent-title">
             <div className="section-heading">
               <p className="eyebrow">家长模式</p>
               <h2 id="parent-title">练习记录</h2>
@@ -1001,7 +1001,7 @@ function App() {
         )}
 
         {screen === 'admin' && (
-          <section className="panel-screen" aria-labelledby="admin-title">
+          <section className="panel-screen admin-screen" aria-labelledby="admin-title">
             <div className="section-heading">
               <p className="eyebrow">内容后台</p>
               <h2 id="admin-title">题库导入与审核</h2>

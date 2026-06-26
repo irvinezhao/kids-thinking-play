@@ -23,6 +23,14 @@ def assert_feedback_centered(page: Page) -> None:
     assert abs(feedback_center_y - page_center_y) < 12, "Feedback should be vertically centered"
 
 
+def assert_locator_fits_viewport(page: Page, selector: str) -> None:
+    box = page.locator(selector).bounding_box()
+    viewport = page.viewport_size
+    assert box and viewport
+    assert box["y"] >= 0, f"{selector} should start inside the viewport"
+    assert box["y"] + box["height"] <= viewport["height"] + 1, f"{selector} should fit in the viewport"
+
+
 def answer_current_question(page: Page) -> None:
     options = page.locator(".option-button")
     count = options.count()
@@ -96,6 +104,7 @@ def run() -> None:
         expect(mobile.get_by_text("能力雷达")).to_be_visible()
         expect(mobile.get_by_text("今日练习")).to_be_visible()
         assert_no_scroll(mobile)
+        assert_locator_fits_viewport(mobile, ".panel-screen")
         mobile.screenshot(path="/tmp/kids-thinking-parent-mobile.png", full_page=True)
 
         mobile.close()
