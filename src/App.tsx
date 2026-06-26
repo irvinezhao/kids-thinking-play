@@ -36,6 +36,7 @@ import {
   sessionQuestionCount,
 } from './data/questionBank'
 import thinkingIslandArt from './assets/illustrations/thinking-island.png'
+import thinkingPathArt from './assets/illustrations/thinking-path.webp'
 import type {
   ActivityStore,
   AgeKey,
@@ -1088,23 +1089,8 @@ function App() {
               <div className="age-copy">
                 <p className="eyebrow">选择年龄</p>
                 <h2 id="age-title">今天从哪一组开始？</h2>
-                <div className="mini-badges" aria-hidden="true">
-                  <span>看一看</span>
-                  <span>想一想</span>
-                  <span>点一点</span>
-                </div>
-                <div className="home-mascot" aria-hidden="true">
-                  <img className="mascot-art" src={thinkingIslandArt} alt="" />
-                  <span className="mascot-island">
-                    <i />
-                    <i />
-                    <b />
-                  </span>
-                  <span className="mascot-pebbles">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
+                <div className="home-map-card" aria-hidden="true">
+                  <img className="home-map-art" src={thinkingPathArt} alt="" />
                 </div>
               </div>
 
@@ -1135,28 +1121,6 @@ function App() {
               </div>
             </section>
 
-            <section className="practice-preview" aria-label="题目预览">
-              <div className="preview-stage toy-preview">
-                <span className="friendly-face" aria-hidden="true">
-                  <span />
-                  <span />
-                </span>
-                <VisualRow
-                  tokens={[
-                    { shape: 'circle', tone: 'coral', item: 'apple' },
-                    { shape: 'square', tone: 'sky', item: 'blocks' },
-                    { shape: 'circle', tone: 'grape', item: 'hat' },
-                    { shape: 'star', tone: 'sun', item: 'bell' },
-                  ]}
-                />
-              </div>
-              <div className="preview-note preview-toys" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-            </section>
           </>
         )}
       </main>
@@ -1243,7 +1207,7 @@ function App() {
         <span />
         <span />
       </div>
-      <img className="quiz-mascot-watermark" src={thinkingIslandArt} alt="" aria-hidden="true" />
+      <img className="quiz-trail-art" src={thinkingPathArt} alt="" aria-hidden="true" />
       <header className="quiz-topbar">
         <button className="icon-button" type="button" onClick={goHome} aria-label="返回年龄选择">
           <ArrowLeft size={22} aria-hidden="true" />
