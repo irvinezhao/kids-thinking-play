@@ -1,26 +1,26 @@
 :root {
-  --surface: #fff4df;
-  --surface-strong: #fffdf6;
-  --paper: #fffdf6;
-  --peach: #ffe3d8;
-  --mint: #ddf5df;
-  --sky-soft: #dcf0ff;
-  --sun-soft: #fff0bd;
-  --coral-soft: #ffe1d7;
-  --text-main: #4c3f35;
-  --text-muted: #71635a;
-  --text-strong: #231b16;
-  --ink: #332820;
-  --ink-soft: rgba(51, 40, 32, 0.18);
-  --grid-line: rgba(255, 255, 255, 0.44);
-  --line: #e7b868;
+  --surface: #fff6e8;
+  --surface-strong: #fffdf7;
+  --paper: #fffaf0;
+  --peach: #ffe1d6;
+  --mint: #dff5df;
+  --sky-soft: #dff2ff;
+  --sun-soft: #fff1bf;
+  --coral-soft: #ffe0d6;
+  --text-main: #554238;
+  --text-muted: #806f61;
+  --text-strong: #2d211b;
+  --ink: #4c382f;
+  --ink-soft: rgba(76, 56, 47, 0.14);
+  --grid-line: rgba(164, 129, 83, 0.12);
+  --line: #e1ba70;
   --focus: #2f7df6;
   --coral: #f05a3d;
   --leaf: #2e8b57;
   --sky: #2f86d6;
   --sun: #f2b51f;
   --grape: #8f62c8;
-  --soft-shadow: 0 18px 44px rgba(79, 53, 29, 0.14);
+  --soft-shadow: 0 18px 44px rgba(106, 75, 39, 0.12);
   color-scheme: light;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
@@ -34,21 +34,21 @@
 }
 
 :root[data-theme='night'] {
-  --surface: #171b2e;
-  --surface-strong: #202742;
-  --paper: #252d49;
-  --peach: #5a3445;
-  --mint: #24543d;
-  --sky-soft: #203f62;
-  --sun-soft: #5c4620;
-  --coral-soft: #60342d;
-  --text-main: #f3e6d4;
-  --text-muted: #d7c7b2;
+  --surface: #171c31;
+  --surface-strong: #222a45;
+  --paper: #27304c;
+  --peach: #5c3547;
+  --mint: #24543e;
+  --sky-soft: #213f63;
+  --sun-soft: #604a22;
+  --coral-soft: #62372f;
+  --text-main: #f6e9d8;
+  --text-muted: #ddccb8;
   --text-strong: #fffaf0;
-  --ink: #f0dcc6;
-  --ink-soft: rgba(0, 0, 0, 0.42);
-  --grid-line: rgba(255, 244, 222, 0.12);
-  --line: #84684a;
+  --ink: #efd9bf;
+  --ink-soft: rgba(0, 0, 0, 0.36);
+  --grid-line: rgba(255, 244, 222, 0.09);
+  --line: #8d714e;
   --focus: #8bb7ff;
   --coral: #ff745d;
   --leaf: #63bf7b;

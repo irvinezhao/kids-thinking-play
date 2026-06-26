@@ -1076,6 +1076,18 @@ function App() {
                   <span>想一想</span>
                   <span>点一点</span>
                 </div>
+                <div className="home-mascot" aria-hidden="true">
+                  <span className="mascot-island">
+                    <i />
+                    <i />
+                    <b />
+                  </span>
+                  <span className="mascot-pebbles">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                </div>
               </div>
 
               <div className="age-grid">
