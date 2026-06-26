@@ -15,6 +15,8 @@
   --text-strong: #2d211b;
   --ink: #4c382f;
   --ink-soft: rgba(76, 56, 47, 0.14);
+  --story-line: rgba(76, 56, 47, 0.58);
+  --story-line-soft: rgba(76, 56, 47, 0.2);
   --grid-line: rgba(164, 129, 83, 0.12);
   --line: #e1ba70;
   --focus: #2f7df6;
@@ -53,6 +55,8 @@
   --text-strong: #fffaf0;
   --ink: #efd9bf;
   --ink-soft: rgba(0, 0, 0, 0.36);
+  --story-line: rgba(255, 244, 222, 0.72);
+  --story-line-soft: rgba(255, 244, 222, 0.2);
   --grid-line: rgba(255, 244, 222, 0.09);
   --line: #8d714e;
   --focus: #8bb7ff;

@@ -175,7 +175,7 @@
 
 .top-actions {
   padding: 5px;
-  border: 2px solid rgba(76, 56, 47, 0.18);
+  border: 2px solid var(--story-line-soft);
   border-radius: 999px;
   background: var(--paper);
   box-shadow: 0 5px 0 rgba(76, 56, 47, 0.08);
@@ -191,7 +191,7 @@
   overflow: hidden;
   min-height: 44px;
   padding: 0 14px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -266,7 +266,7 @@
 .brand-mark {
   width: 50px;
   height: 50px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   color: #2f251f;
   background: var(--sun);
@@ -292,16 +292,16 @@
 .home-hero {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
-  padding: clamp(24px, 4.4vh, 42px) 0 18px;
+  padding: clamp(16px, 3.5vh, 34px) 0 18px;
   display: grid;
-  grid-template-columns: minmax(260px, 0.68fr) minmax(0, 1.32fr);
-  gap: 34px;
+  grid-template-columns: minmax(300px, 0.78fr) minmax(0, 1.22fr);
+  gap: 30px;
   align-items: center;
 }
 
 .age-copy {
-  min-height: 244px;
-  padding: 8px 0 12px;
+  min-height: 286px;
+  padding: 6px 0 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -334,7 +334,7 @@
 
 .mini-badges span {
   padding: 10px 14px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -345,9 +345,9 @@
 
 .home-mascot {
   position: relative;
-  width: min(320px, 100%);
-  height: 170px;
-  margin-top: 18px;
+  width: min(370px, 100%);
+  height: 196px;
+  margin-top: 12px;
 }
 
 .mascot-art {
@@ -500,7 +500,7 @@
   z-index: 1;
   min-height: 196px;
   padding: 18px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-main);
   background: var(--paper);
@@ -546,7 +546,7 @@
   right: 16px;
   bottom: 16px;
   padding: 6px 12px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -672,7 +672,7 @@
 .preview-stage {
   position: relative;
   min-height: 118px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   background: var(--sky-soft);
   box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
@@ -686,7 +686,7 @@
   top: 16px;
   width: 58px;
   height: 42px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   background: var(--paper);
   box-shadow: 0 5px 0 var(--ink-soft);
@@ -722,7 +722,7 @@
 
 .preview-note {
   padding: 14px 16px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   background: var(--paper);
   box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
@@ -770,7 +770,7 @@
   height: 58px;
   margin: 8px auto 0;
   padding: 5px;
-  border: 2px solid rgba(76, 56, 47, 0.18);
+  border: 2px solid var(--story-line-soft);
   border-radius: 999px;
   background: var(--paper);
   box-shadow: 0 5px 0 rgba(76, 56, 47, 0.08);
@@ -786,7 +786,7 @@
   overflow: hidden;
   width: 46px;
   height: 46px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -817,7 +817,7 @@
   flex: 1;
   min-width: 0;
   padding: 12px 16px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -848,7 +848,7 @@
   width: min(1120px, calc(100% - 40px));
   height: 16px;
   margin: 8px auto 0;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   background: var(--sun-soft);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.28);
@@ -871,7 +871,7 @@
   top: 50%;
   width: 22px;
   height: 22px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   background: var(--sun);
   box-shadow: 0 3px 0 var(--ink-soft);
@@ -896,7 +896,7 @@
   width: fit-content;
   margin-bottom: 12px;
   padding: 8px 12px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--sun-soft);
@@ -920,7 +920,7 @@
   min-height: 222px;
   margin-top: 16px;
   padding: 20px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   background:
     linear-gradient(180deg, var(--surface-strong), var(--paper));
   box-shadow:
@@ -938,7 +938,7 @@
   width: 54px;
   height: 24px;
   z-index: 0;
-  border: 2px solid rgba(76, 56, 47, 0.14);
+  border: 2px solid var(--story-line-soft);
   border-radius: 999px;
   background: var(--surface-strong);
   box-shadow: inset 0 -4px 0 rgba(76, 56, 47, 0.05);
@@ -1177,7 +1177,7 @@
 .object-part {
   position: absolute;
   display: none;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   background: var(--object-main, var(--coral));
   box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.12);
 }
@@ -2143,7 +2143,7 @@
   position: absolute;
   inset: -8px -8px -10px;
   z-index: -1;
-  border: 2px dashed rgba(76, 56, 47, 0.12);
+  border: 2px dashed var(--story-line-soft);
   border-radius: 8px;
   background: rgba(255, 250, 240, 0.28);
   content: '';
@@ -2160,7 +2160,7 @@
   overflow: hidden;
   min-height: 122px;
   padding: 14px 12px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2278,7 +2278,7 @@
   max-width: min(180px, 42vw);
   min-height: 90px;
   padding: 12px;
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   border-radius: 8px;
   background: var(--paper);
   box-shadow: 0 10px 0 var(--ink-soft);
@@ -2352,7 +2352,7 @@
   width: min(420px, calc(100% - 40px));
   margin: 0;
   padding: 18px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   box-shadow: 0 6px 0 var(--ink-soft);
   display: flex;
   align-items: stretch;
@@ -2421,7 +2421,7 @@
   width: fit-content;
   margin: -2px auto 0;
   padding: 0 13px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2457,7 +2457,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   transform: translate(-50%, -50%);
 }
@@ -2494,7 +2494,7 @@
   top: -3px;
   width: 12px;
   height: 12px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   background: var(--effect-color);
   box-shadow: 0 3px 0 var(--ink-soft);
@@ -2516,7 +2516,7 @@
   top: calc(50% + var(--puff-y));
   width: var(--puff-size);
   height: var(--puff-size);
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 999px;
   background: var(--sky-soft);
   box-shadow: 0 5px 0 var(--ink-soft);
@@ -2548,7 +2548,7 @@
   display: block;
   height: 9px;
   margin-bottom: 7px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 999px;
   background: var(--paper);
   overflow: hidden;
@@ -2581,14 +2581,14 @@
 }
 
 .primary-button {
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   color: #ffffff;
   background: var(--ink);
   box-shadow: 0 6px 0 var(--ink-soft);
 }
 
 .secondary-button {
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   color: var(--text-strong);
   background: var(--paper);
   box-shadow: 0 6px 0 var(--ink-soft);
@@ -2602,7 +2602,7 @@
   width: min(720px, calc(100% - 40px));
   margin: 72px auto 0;
   padding: 48px;
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   background: var(--paper);
   box-shadow: 0 12px 0 var(--ink-soft);
   text-align: center;
@@ -2612,7 +2612,7 @@
   width: 100px;
   height: 100px;
   margin-bottom: 24px;
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   border-radius: 8px;
   color: var(--ink);
   background: var(--sun);
@@ -2685,7 +2685,7 @@
 .stat-card,
 .dashboard-card,
 .review-item {
-  border: 4px solid var(--ink);
+  border: 4px solid var(--story-line);
   border-radius: 8px;
   background: var(--paper);
   box-shadow: 0 8px 0 var(--ink-soft);
@@ -2739,7 +2739,7 @@
 .wrong-retry-button {
   min-height: 34px;
   padding: 0 10px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--sun-soft);
@@ -2794,7 +2794,7 @@
 
 .radar-list span {
   padding: 8px 10px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 8px;
   background: var(--mint);
   display: flex;
@@ -2806,7 +2806,7 @@
 
 .wrong-item {
   padding: 10px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 8px;
   background: var(--coral-soft);
   display: grid;
@@ -2849,7 +2849,7 @@
   min-height: 148px;
   margin-bottom: 14px;
   padding: 14px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 8px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2864,7 +2864,7 @@
 
 .audit-summary span {
   padding: 14px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 8px;
   background: var(--sky-soft);
   display: flex;
@@ -2898,7 +2898,7 @@
 .review-actions button {
   min-height: 36px;
   padding: 0 12px;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -2925,7 +2925,7 @@
 .drop-zone {
   position: relative;
   overflow: hidden;
-  border: 2px dashed var(--ink);
+  border: 2px dashed var(--story-line);
   border-radius: 8px;
   background: var(--sun-soft);
   flex-direction: column;
@@ -2975,7 +2975,7 @@
 
 .drop-label {
   padding: 9px 14px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--paper);
@@ -3002,7 +3002,7 @@
   min-width: 132px;
   min-height: 142px;
   padding: 14px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   background: var(--sky-soft);
   display: grid;
@@ -3071,7 +3071,7 @@
 .connect-placeholder {
   width: 82px;
   height: 82px;
-  border: 2px dashed var(--ink);
+  border: 2px dashed var(--story-line);
   border-radius: 8px;
   background: var(--paper);
 }
@@ -3086,7 +3086,7 @@
   min-width: 126px;
   min-height: 152px;
   padding: 14px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   background: var(--mint);
   display: grid;
@@ -3117,7 +3117,7 @@
 .maze-cell {
   position: relative;
   overflow: hidden;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 8px;
   background: var(--paper);
   cursor: pointer;
@@ -3201,7 +3201,7 @@
 .maze-cell em {
   width: 28px;
   height: 28px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--story-line);
   border-radius: 999px;
   background: var(--sun);
   display: grid;
