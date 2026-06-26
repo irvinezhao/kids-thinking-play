@@ -1175,12 +1175,18 @@ function App() {
         </header>
 
         <section className="result-panel" aria-live="polite">
-          <span className="result-icon">
-            <Trophy size={52} strokeWidth={2.2} aria-hidden="true" />
-          </span>
-          <p className="eyebrow">完成</p>
+          <div className="result-prize" aria-hidden="true">
+            <img className="result-mascot-art" src={thinkingIslandArt} alt="" />
+            <span className="result-icon">
+              <Trophy size={44} strokeWidth={2.2} />
+            </span>
+          </div>
+          <p className="eyebrow">完成啦</p>
           <h2>{score} / {trackQuestions.length}</h2>
-          <p>{isReviewSession ? '这组错题已经练完了。' : '这组练习已经做完了，错题已记录到家长模式。'}</p>
+          <p className="result-message">{isReviewSession ? '这组重练做完啦。' : '这组练习做完啦。'}</p>
+          {!isReviewSession && sessionWrongQuestionIds.length > 0 && (
+            <p className="result-parent-note">错题已放进家长记录。</p>
+          )}
           <div className="result-actions">
             {sessionWrongQuestionIds.length > 0 && (
               <button
@@ -1354,11 +1360,9 @@ function App() {
           <FeedbackEffect correct={answeredCorrectly} />
           <section className={answeredCorrectly ? 'feedback correct' : 'feedback wrong'} aria-live="polite">
             <div className="feedback-copy">
-              {answeredCorrectly ? (
-                <CheckCircle2 size={27} aria-hidden="true" />
-              ) : (
-                <XCircle size={27} aria-hidden="true" />
-              )}
+              <span className="feedback-mark" aria-hidden="true">
+                {answeredCorrectly ? <CheckCircle2 size={34} /> : <XCircle size={34} />}
+              </span>
               <div className="feedback-text">
                 <strong>{answeredCorrectly ? correctPraise : retryPraise}</strong>
                 <p>{answeredCorrectly ? currentQuestion.success : currentQuestion.retry}</p>
