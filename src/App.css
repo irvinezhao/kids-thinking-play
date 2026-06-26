@@ -38,6 +38,7 @@
 .home-hero,
 .practice-preview,
 .progress-track,
+.quiz-playmat,
 .question-area,
 .option-grid,
 .feedback,
@@ -990,6 +991,61 @@
   margin-right: auto;
 }
 
+.quiz-playmat {
+  width: min(900px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 0 18px 18px;
+}
+
+.quiz-playmat::before {
+  position: absolute;
+  inset: 82px 0 0;
+  z-index: -1;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.16) 0%, rgba(223, 245, 223, 0.34) 100%),
+    radial-gradient(circle at 13% 86%, rgba(255, 225, 214, 0.54) 0 18px, transparent 19px),
+    radial-gradient(circle at 86% 88%, rgba(223, 242, 255, 0.7) 0 22px, transparent 23px);
+  box-shadow:
+    inset 0 -10px 0 rgba(76, 56, 47, 0.035),
+    0 6px 0 rgba(76, 56, 47, 0.035);
+  content: '';
+}
+
+.quiz-playmat::after {
+  position: absolute;
+  right: 42px;
+  bottom: 18px;
+  left: 42px;
+  z-index: -1;
+  height: 44px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 18% 52%, rgba(242, 181, 31, 0.16) 0 9px, transparent 10px),
+    radial-gradient(circle at 82% 56%, rgba(46, 139, 87, 0.14) 0 12px, transparent 13px),
+    rgba(46, 139, 87, 0.08);
+  content: '';
+}
+
+:root[data-theme='night'] .quiz-playmat::before {
+  background:
+    linear-gradient(180deg, rgba(39, 48, 76, 0.14) 0%, rgba(36, 84, 62, 0.18) 100%),
+    radial-gradient(circle at 13% 86%, rgba(255, 116, 93, 0.16) 0 18px, transparent 19px),
+    radial-gradient(circle at 86% 88%, rgba(103, 169, 234, 0.18) 0 22px, transparent 23px);
+}
+
+:root[data-theme='night'] .quiz-playmat::after {
+  background:
+    radial-gradient(circle at 18% 52%, rgba(255, 200, 75, 0.12) 0 9px, transparent 10px),
+    radial-gradient(circle at 82% 56%, rgba(99, 191, 123, 0.12) 0 12px, transparent 13px),
+    rgba(99, 191, 123, 0.08);
+}
+
+.quiz-playmat .question-area,
+.quiz-playmat .option-grid {
+  width: min(860px, 100%);
+}
+
 .question-area {
   padding: 16px 0 10px;
 }
@@ -1024,6 +1080,8 @@
   padding: 20px;
   border: 2px solid var(--story-line);
   background:
+    radial-gradient(circle at 14% 16%, rgba(223, 242, 255, 0.76) 0 42px, transparent 43px),
+    radial-gradient(circle at 88% 18%, rgba(255, 241, 191, 0.72) 0 28px, transparent 29px),
     linear-gradient(180deg, var(--surface-strong), var(--paper));
   box-shadow:
     0 7px 0 var(--ink-soft),
@@ -2358,18 +2416,25 @@
 
 .option-grid::before {
   position: absolute;
-  inset: -8px -8px -10px;
+  inset: -10px -12px -12px;
   z-index: -1;
-  border: 2px dashed var(--story-line-soft);
+  border: 2px solid var(--story-line-soft);
   border-radius: 8px;
-  background: rgba(255, 250, 240, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.52), rgba(223, 245, 223, 0.28)),
+    var(--surface-strong);
+  box-shadow:
+    inset 0 -7px 0 rgba(76, 56, 47, 0.035),
+    0 5px 0 rgba(76, 56, 47, 0.05);
   content: '';
   pointer-events: none;
 }
 
 :root[data-theme='night'] .option-grid::before {
-  border-color: rgba(255, 244, 222, 0.13);
-  background: rgba(39, 48, 76, 0.22);
+  border-color: rgba(255, 244, 222, 0.2);
+  background:
+    linear-gradient(180deg, rgba(39, 48, 76, 0.5), rgba(36, 84, 62, 0.2)),
+    var(--paper);
 }
 
 .option-button {
@@ -3912,11 +3977,22 @@
   .home-hero,
   .practice-preview,
   .progress-track,
+  .quiz-playmat,
   .question-area,
   .option-grid,
   .feedback,
   .result-panel {
     width: min(100% - 28px, 1120px);
+  }
+
+  .quiz-playmat {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .quiz-playmat .question-area,
+  .quiz-playmat .option-grid {
+    width: 100%;
   }
 
   .panel-screen {
@@ -4484,5 +4560,33 @@
   .theme-toggle::after {
     width: 5px;
     height: 5px;
+  }
+
+  .quiz-screen .quiz-topbar {
+    gap: 7px;
+  }
+
+  .quiz-screen .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .quiz-screen .quiz-title {
+    gap: 5px;
+    padding: 0 4px;
+  }
+
+  .quiz-title span,
+  .quiz-title strong {
+    white-space: nowrap;
+  }
+
+  .quiz-title span {
+    font-size: 14px;
+  }
+
+  .quiz-title strong {
+    flex: 0 0 auto;
+    font-size: 13px;
   }
 }

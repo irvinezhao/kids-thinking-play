@@ -1262,70 +1262,72 @@ function App() {
         <span />
       </div>
 
-      <section className="question-area">
-        <div className="skill-chip">
-          <Star size={17} aria-hidden="true" />
-          {currentQuestion.skill}
-        </div>
-        <h2>{currentQuestion.prompt}</h2>
+      <div className="quiz-playmat">
+        <section className="question-area">
+          <div className="skill-chip">
+            <Star size={17} aria-hidden="true" />
+            {currentQuestion.skill}
+          </div>
+          <h2>{currentQuestion.prompt}</h2>
 
-        <div className={`question-stage template-${currentQuestion.template}`}>
-          <QuestionStage
-            question={currentQuestion}
-            disabled={Boolean(pickedOption)}
-            pickedOption={pickedOption}
-            onAnswer={chooseOption}
-            stageGesture={
-              activeGesture
-                ? { template: activeGesture.template, overTarget: activeGesture.overTarget }
-                : null
-            }
-          />
-        </div>
-      </section>
-
-      <section className={`option-grid template-${currentQuestion.template}`} aria-label="答案选项">
-        {currentQuestion.options.map((option) => {
-          const isPicked = pickedOption === option.id
-          const isCorrect = option.id === currentQuestion.answerId
-          const pickedCorrectly = pickedOption === currentQuestion.answerId
-          const isGestureSource = activeGesture?.optionId === option.id
-          const stateClass = pickedOption
-            ? pickedCorrectly
-              ? isCorrect
-                ? 'is-correct'
-                : 'is-muted'
-              : isPicked
-                ? 'is-wrong'
-                : 'is-muted'
-            : ''
-
-          return (
-            <button
-              className={[
-                'option-button',
-                `template-${currentQuestion.template}`,
-                stateClass,
-                isGestureSource ? 'is-gesture-source' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+          <div className={`question-stage template-${currentQuestion.template}`}>
+            <QuestionStage
+              question={currentQuestion}
               disabled={Boolean(pickedOption)}
-              draggable={false}
-              key={option.id}
-              type="button"
-              onClick={(event) => handleOptionClick(event, option.id)}
-              onDragStart={(event) => event.preventDefault()}
-              onPointerCancel={cancelOptionGesture}
-              onPointerDown={(event) => beginOptionGesture(event, option.id)}
-              onPointerMove={moveOptionGesture}
-              onPointerUp={endOptionGesture}
-            >
-              <OptionContent option={option} />
-            </button>
-          )
-        })}
-      </section>
+              pickedOption={pickedOption}
+              onAnswer={chooseOption}
+              stageGesture={
+                activeGesture
+                  ? { template: activeGesture.template, overTarget: activeGesture.overTarget }
+                  : null
+              }
+            />
+          </div>
+        </section>
+
+        <section className={`option-grid template-${currentQuestion.template}`} aria-label="答案选项">
+          {currentQuestion.options.map((option) => {
+            const isPicked = pickedOption === option.id
+            const isCorrect = option.id === currentQuestion.answerId
+            const pickedCorrectly = pickedOption === currentQuestion.answerId
+            const isGestureSource = activeGesture?.optionId === option.id
+            const stateClass = pickedOption
+              ? pickedCorrectly
+                ? isCorrect
+                  ? 'is-correct'
+                  : 'is-muted'
+                : isPicked
+                  ? 'is-wrong'
+                  : 'is-muted'
+              : ''
+
+            return (
+              <button
+                className={[
+                  'option-button',
+                  `template-${currentQuestion.template}`,
+                  stateClass,
+                  isGestureSource ? 'is-gesture-source' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                disabled={Boolean(pickedOption)}
+                draggable={false}
+                key={option.id}
+                type="button"
+                onClick={(event) => handleOptionClick(event, option.id)}
+                onDragStart={(event) => event.preventDefault()}
+                onPointerCancel={cancelOptionGesture}
+                onPointerDown={(event) => beginOptionGesture(event, option.id)}
+                onPointerMove={moveOptionGesture}
+                onPointerUp={endOptionGesture}
+              >
+                <OptionContent option={option} />
+              </button>
+            )
+          })}
+        </section>
+      </div>
 
       {activeGesture && activeGestureOption && (
         <>
