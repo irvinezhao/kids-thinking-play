@@ -10,7 +10,6 @@ import {
   Home,
   Moon,
   RotateCcw,
-  Shapes,
   Star,
   Sun,
   Trophy,
@@ -531,7 +530,6 @@ function App() {
   const currentQuestion = trackQuestions[questionIndex] ?? null
   const score = answers.length
   const finished = selectedAge !== null && questionIndex >= trackQuestions.length
-  const totalApproved = questionPool.filter((question) => question.status === 'approved').length
   const isReviewSession = Boolean(reviewQuestionIds)
 
   useEffect(() => {
@@ -1121,23 +1119,25 @@ function App() {
             </section>
 
             <section className="practice-preview" aria-label="题目预览">
-              <div className="preview-stage">
+              <div className="preview-stage toy-preview">
                 <span className="friendly-face" aria-hidden="true">
                   <span />
                   <span />
                 </span>
                 <VisualRow
                   tokens={[
-                    { shape: 'circle', tone: 'coral' },
-                    { shape: 'square', tone: 'sky' },
-                    { shape: 'triangle', tone: 'leaf' },
-                    { shape: 'star', tone: 'sun' },
+                    { shape: 'circle', tone: 'coral', item: 'apple' },
+                    { shape: 'square', tone: 'sky', item: 'blocks' },
+                    { shape: 'circle', tone: 'grape', item: 'hat' },
+                    { shape: 'star', tone: 'sun', item: 'bell' },
                   ]}
                 />
               </div>
-              <div className="preview-note">
-                <Shapes size={22} aria-hidden="true" />
-                <span>已准备 {totalApproved} 道原创题。</span>
+              <div className="preview-note preview-toys" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
               </div>
             </section>
           </>

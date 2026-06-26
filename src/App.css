@@ -680,6 +680,50 @@
   justify-content: center;
 }
 
+.toy-preview {
+  overflow: hidden;
+}
+
+.toy-preview::before {
+  position: absolute;
+  right: 22px;
+  bottom: 16px;
+  left: 92px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(46, 139, 87, 0.12);
+  content: '';
+}
+
+.toy-preview .visual-row {
+  padding-left: 62px;
+  gap: 18px;
+}
+
+.toy-preview .object-tile {
+  width: 74px;
+  height: 74px;
+  border-color: rgba(255, 250, 240, 0.72);
+  transform: rotate(-1.5deg);
+}
+
+.toy-preview .object-tile:nth-child(2) {
+  transform: translateY(-4px) rotate(2deg);
+}
+
+.toy-preview .object-tile:nth-child(3) {
+  transform: rotate(-2deg);
+}
+
+.toy-preview .object-tile:nth-child(4) {
+  transform: translateY(2px) rotate(2.5deg);
+}
+
+.toy-preview .object-figure {
+  width: 54px;
+  height: 54px;
+}
+
 .friendly-face {
   position: absolute;
   left: 18px;
@@ -731,6 +775,63 @@
   font-size: 17px;
   font-weight: 950;
   line-height: 1.45;
+}
+
+.preview-toys {
+  position: relative;
+  justify-content: center;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.preview-toys::before {
+  position: absolute;
+  inset: 14px;
+  border-radius: 999px;
+  background: var(--sun-soft);
+  content: '';
+  opacity: 0.52;
+}
+
+.preview-toys span {
+  position: relative;
+  z-index: 1;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--story-line);
+  border-radius: 999px;
+  background: var(--coral);
+  box-shadow: 0 4px 0 var(--ink-soft);
+}
+
+.preview-toys span:nth-child(2) {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--sky);
+}
+
+.preview-toys span:nth-child(3) {
+  background: var(--leaf);
+}
+
+.preview-toys span:nth-child(4) {
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  background: var(--sun);
+  clip-path: polygon(
+    50% 0%,
+    61% 34%,
+    98% 35%,
+    68% 56%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 56%,
+    2% 35%,
+    39% 34%
+  );
 }
 
 .preview-note svg {
@@ -3810,14 +3911,32 @@
   }
 
   .preview-stage .visual-row {
+    padding-left: 0;
     gap: 10px;
     flex-wrap: nowrap;
+  }
+
+  .toy-preview::before {
+    right: 20px;
+    left: 20px;
+    bottom: 10px;
+    height: 12px;
   }
 
   .preview-stage .shape-tile {
     width: 48px;
     height: 48px;
     font-size: 17px;
+  }
+
+  .preview-stage .object-tile {
+    width: 52px;
+    height: 52px;
+  }
+
+  .preview-stage .object-figure {
+    width: 38px;
+    height: 38px;
   }
 
   .preview-stage .shape-triangle {
