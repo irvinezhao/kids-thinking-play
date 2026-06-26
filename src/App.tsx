@@ -8,9 +8,11 @@ import {
   Database,
   FileJson,
   Home,
+  Moon,
   RotateCcw,
   Shapes,
   Star,
+  Sun,
   Trophy,
   Upload,
   Volume2,
@@ -51,6 +53,7 @@ import type {
 import './App.css'
 
 type ScreenMode = 'home' | 'parent' | 'admin'
+type ThemeMode = 'day' | 'night'
 type SessionAnswer = {
   questionId: string
   optionId: string
@@ -73,6 +76,7 @@ const progressStorageKey = 'kids-thinking-play-progress'
 const activityStorageKey = 'kids-thinking-play-activity'
 const importedStorageKey = 'kids-thinking-play-imported-questions'
 const soundStorageKey = 'kids-thinking-play-sound-enabled'
+const themeStorageKey = 'kids-thinking-play-theme-mode'
 const validAges: AgeKey[] = ['age2', 'age3', 'age4']
 const validTemplates: TemplateKind[] = ['choice', 'drag', 'connect', 'shadow', 'maze', 'leftRight']
 const validShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star', 'pill']
@@ -167,6 +171,11 @@ function readJson<T>(key: string, fallback: T): T {
   } catch {
     return fallback
   }
+}
+
+function readThemeMode(): ThemeMode {
+  const stored = readJson<ThemeMode | null>(themeStorageKey, null)
+  return stored === 'night' || stored === 'day' ? stored : 'day'
 }
 
 function localDateKey(value: string | Date) {
@@ -496,6 +505,7 @@ function App() {
   const [importText, setImportText] = useState('')
   const [importMessage, setImportMessage] = useState('还没有导入内容。')
   const [soundEnabled, setSoundEnabled] = useState(() => readJson(soundStorageKey, true))
+  const [themeMode, setThemeMode] = useState<ThemeMode>(readThemeMode)
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[] | null>(null)
   const [sessionWrongQuestionIds, setSessionWrongQuestionIds] = useState<string[]>([])
   const [activeGesture, setActiveGestureState] = useState<ActiveOptionGesture | null>(null)
@@ -538,6 +548,15 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(soundStorageKey, JSON.stringify(soundEnabled))
   }, [soundEnabled])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode
+    window.localStorage.setItem(themeStorageKey, JSON.stringify(themeMode))
+  }, [themeMode])
+
+  function toggleTheme() {
+    setThemeMode((mode) => (mode === 'day' ? 'night' : 'day'))
+  }
 
   function startTrack(age: AgeKey) {
     setScreen('home')
@@ -873,13 +892,22 @@ function App() {
               {soundEnabled ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}
               <span>{soundEnabled ? '声音' : '静音'}</span>
             </button>
-            <button className="small-tool-button" type="button" onClick={showParentMode}>
-              <BarChart3 size={18} aria-hidden="true" />
-              家长
+            <button
+              aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
+              className="small-tool-button theme-toggle"
+              type="button"
+              onClick={toggleTheme}
+            >
+              {themeMode === 'day' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+              <span>{themeMode === 'day' ? '白天' : '黑夜'}</span>
             </button>
-            <button className="small-tool-button" type="button" onClick={showAdminMode}>
+            <button className="small-tool-button" type="button" onClick={showParentMode} aria-label="家长">
+              <BarChart3 size={18} aria-hidden="true" />
+              <span>家长</span>
+            </button>
+            <button className="small-tool-button" type="button" onClick={showAdminMode} aria-label="题库">
               <Database size={18} aria-hidden="true" />
-              题库
+              <span>题库</span>
             </button>
           </div>
         </header>
@@ -1120,6 +1148,14 @@ function App() {
           >
             {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
           </button>
+          <button
+            className="icon-button theme-icon-button"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
+          >
+            {themeMode === 'day' ? <Sun size={21} aria-hidden="true" /> : <Moon size={21} aria-hidden="true" />}
+          </button>
         </header>
 
         <section className="result-panel" aria-live="polite">
@@ -1183,6 +1219,14 @@ function App() {
           aria-label={soundEnabled ? '关闭声音' : '打开声音'}
         >
           {soundEnabled ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
+        </button>
+        <button
+          className="icon-button theme-icon-button"
+          type="button"
+          onClick={toggleTheme}
+          aria-label={themeMode === 'day' ? '切换到黑夜模式' : '切换到白天模式'}
+        >
+          {themeMode === 'day' ? <Sun size={21} aria-hidden="true" /> : <Moon size={21} aria-hidden="true" />}
         </button>
       </header>
 
