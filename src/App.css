@@ -3285,6 +3285,26 @@
   pointer-events: none;
 }
 
+.admin-screen {
+  isolation: isolate;
+}
+
+.admin-screen::before {
+  position: absolute;
+  left: 10px;
+  top: 88px;
+  z-index: -1;
+  width: min(420px, 42vw);
+  height: 74px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 22% 52%, rgba(47, 134, 214, 0.14) 0 18px, transparent 19px),
+    radial-gradient(circle at 78% 48%, rgba(242, 181, 31, 0.14) 0 15px, transparent 16px),
+    rgba(240, 90, 61, 0.08);
+  content: '';
+  pointer-events: none;
+}
+
 .section-heading {
   margin-bottom: 14px;
   display: grid;
@@ -3388,6 +3408,19 @@
   background:
     radial-gradient(circle at 92% 12%, rgba(255, 241, 191, 0.42) 0 30px, transparent 31px),
     linear-gradient(180deg, var(--surface-strong) 0%, var(--paper) 100%);
+}
+
+.admin-screen .dashboard-card,
+.admin-screen .review-item {
+  background:
+    radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.64) 0 26px, transparent 27px),
+    linear-gradient(180deg, var(--surface-strong) 0%, var(--paper) 100%);
+}
+
+.admin-screen .dashboard-card:nth-child(2) {
+  background:
+    radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.64) 0 26px, transparent 27px),
+    linear-gradient(180deg, var(--sky-soft) 0%, var(--paper) 100%);
 }
 
 .dashboard-card h3 {
@@ -4435,6 +4468,174 @@
     font-size: 11px;
   }
 
+  .admin-screen {
+    padding-top: 8px;
+  }
+
+  .admin-screen::before {
+    top: 70px;
+    left: -24px;
+    width: 220px;
+    height: 52px;
+  }
+
+  .admin-screen .section-heading {
+    margin-bottom: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 10px;
+  }
+
+  .admin-screen .section-heading .eyebrow {
+    font-size: 13px;
+  }
+
+  .admin-screen .section-heading h2 {
+    font-size: 25px;
+  }
+
+  .admin-screen .section-heading .secondary-button {
+    min-height: 40px;
+    padding: 0 12px;
+    border-width: 3px;
+    font-size: 14px;
+  }
+
+  .admin-screen .admin-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .admin-screen .dashboard-card {
+    min-height: 0;
+    height: 318px;
+    padding: 10px;
+    border-width: 3px;
+    box-shadow: 0 5px 0 var(--ink-soft);
+    overflow: hidden;
+  }
+
+  .admin-screen .dashboard-card h3 {
+    margin-bottom: 8px;
+    font-size: 16px;
+  }
+
+  .admin-screen .import-card textarea {
+    min-height: 98px;
+    height: 98px;
+    margin-bottom: 9px;
+    padding: 10px;
+    border-width: 2px;
+    font-size: 12px;
+    resize: none;
+  }
+
+  .admin-screen .admin-actions {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .admin-screen .admin-actions .primary-button,
+  .admin-screen .admin-actions .secondary-button {
+    min-height: 40px;
+    padding: 0 8px;
+    border-width: 3px;
+    font-size: 13px;
+    line-height: 1.12;
+  }
+
+  .admin-screen .import-message {
+    display: -webkit-box;
+    margin-top: 8px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 12px;
+  }
+
+  .admin-screen .audit-summary {
+    gap: 7px;
+  }
+
+  .admin-screen .audit-summary span {
+    min-height: 45px;
+    padding: 7px 8px;
+    border-width: 2px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.08;
+  }
+
+  .admin-screen .audit-summary strong {
+    justify-self: end;
+    align-self: center;
+    font-size: 12px;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .admin-screen .review-list {
+    margin-top: 8px;
+  }
+
+  .admin-screen .review-item {
+    min-height: 102px;
+    padding: 9px 10px;
+    border-width: 3px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    box-shadow: 0 5px 0 var(--ink-soft);
+  }
+
+  .admin-screen .review-item:nth-child(n + 2) {
+    display: none;
+  }
+
+  .admin-screen .review-item span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .admin-screen .review-item strong {
+    display: -webkit-box;
+    margin: 3px 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    font-size: 13px;
+  }
+
+  .admin-screen .review-item p {
+    display: none;
+  }
+
+  .admin-screen .review-actions {
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+
+  .admin-screen .review-actions button {
+    min-height: 28px;
+    padding: 0 8px;
+    border-width: 2px;
+    font-size: 12px;
+  }
+
+  .admin-screen .review-actions em {
+    max-width: 74px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
   .topbar {
     padding-top: 14px;
     gap: 10px;
@@ -5132,6 +5333,79 @@
 
   .parent-screen .wrong-item:nth-child(n + 2) {
     display: none;
+  }
+
+  .admin-screen {
+    padding-top: 6px;
+  }
+
+  .admin-screen .section-heading {
+    margin-bottom: 6px;
+  }
+
+  .admin-screen .section-heading .eyebrow {
+    display: none;
+  }
+
+  .admin-screen .section-heading h2 {
+    font-size: 23px;
+  }
+
+  .admin-screen .section-heading .secondary-button {
+    min-height: 36px;
+    padding: 0 10px;
+  }
+
+  .admin-screen .admin-grid {
+    gap: 7px;
+  }
+
+  .admin-screen .dashboard-card {
+    height: 294px;
+    padding: 8px;
+  }
+
+  .admin-screen .dashboard-card h3 {
+    font-size: 15px;
+  }
+
+  .admin-screen .import-card textarea {
+    min-height: 82px;
+    height: 82px;
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  .admin-screen .admin-actions {
+    gap: 6px;
+  }
+
+  .admin-screen .admin-actions .primary-button,
+  .admin-screen .admin-actions .secondary-button {
+    min-height: 37px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+
+  .admin-screen .audit-summary span {
+    min-height: 40px;
+    padding: 6px;
+    grid-template-columns: 30px minmax(0, 1fr);
+    font-size: 12px;
+  }
+
+  .admin-screen .audit-summary strong {
+    font-size: 11px;
+  }
+
+  .admin-screen .review-item {
+    min-height: 96px;
+    padding: 8px;
+  }
+
+  .admin-screen .review-actions button {
+    padding: 0 7px;
+    font-size: 11px;
   }
 
   .home-hero {

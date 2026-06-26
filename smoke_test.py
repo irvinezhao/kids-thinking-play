@@ -78,6 +78,7 @@ def run() -> None:
         expect(desktop.get_by_text("已导入 1 道题")).to_be_visible()
         desktop.get_by_role("button", name="全部通过").click()
         expect(desktop.get_by_text("所有导入题已审核通过")).to_be_visible()
+        assert_locator_fits_viewport(desktop, ".panel-screen")
         desktop.get_by_role("button", name="返回").click()
         desktop.screenshot(path="/tmp/kids-thinking-home-desktop.png", full_page=True)
         desktop.close()
@@ -106,6 +107,13 @@ def run() -> None:
         assert_no_scroll(mobile)
         assert_locator_fits_viewport(mobile, ".panel-screen")
         mobile.screenshot(path="/tmp/kids-thinking-parent-mobile.png", full_page=True)
+
+        mobile.get_by_role("button", name="返回").click()
+        mobile.get_by_role("button", name="题库").click()
+        expect(mobile.get_by_role("heading", name="题库导入与审核")).to_be_visible()
+        assert_no_scroll(mobile)
+        assert_locator_fits_viewport(mobile, ".panel-screen")
+        mobile.screenshot(path="/tmp/kids-thinking-admin-mobile.png", full_page=True)
 
         mobile.close()
         browser.close()
