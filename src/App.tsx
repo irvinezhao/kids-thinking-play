@@ -36,6 +36,7 @@ import {
   pickSessionQuestions,
   sessionQuestionCount,
 } from './data/questionBank'
+import thinkingIslandArt from './assets/illustrations/thinking-island.png'
 import type {
   ActivityStore,
   AgeKey,
@@ -1078,6 +1079,7 @@ function App() {
                   <span>点一点</span>
                 </div>
                 <div className="home-mascot" aria-hidden="true">
+                  <img className="mascot-art" src={thinkingIslandArt} alt="" />
                   <span className="mascot-island">
                     <i />
                     <i />
@@ -1218,6 +1220,7 @@ function App() {
         <span />
         <span />
       </div>
+      <img className="quiz-mascot-watermark" src={thinkingIslandArt} alt="" aria-hidden="true" />
       <header className="quiz-topbar">
         <button className="icon-button" type="button" onClick={goHome} aria-label="返回年龄选择">
           <ArrowLeft size={22} aria-hidden="true" />
@@ -1245,8 +1248,12 @@ function App() {
         </button>
       </header>
 
-      <div className="progress-track" aria-hidden="true">
-        <span style={{ width: `${progressPercent}%` }} />
+      <div
+        className="progress-track"
+        aria-hidden="true"
+        style={{ '--progress': `${progressPercent}%` } as CSSProperties}
+      >
+        <span />
       </div>
 
       <section className="question-area">
