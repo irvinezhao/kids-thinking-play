@@ -2,6 +2,7 @@ from playwright.sync_api import Page, expect, sync_playwright
 
 
 BASE_URL = "http://localhost:5173/?testFast=1"
+VOICE_TEST_URL = "http://localhost:5173/"
 
 
 def assert_no_scroll(page: Page) -> None:
@@ -48,9 +49,67 @@ def answer_current_question(page: Page) -> None:
     raise AssertionError("No correct option found for current question")
 
 
+def assert_question_voice_prompt(page: Page) -> None:
+    page.add_init_script(
+        """
+        (() => {
+          window.__spokenPrompts = [];
+          window.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(text) {
+            this.text = text;
+            this.lang = '';
+            this.voice = null;
+            this.rate = 1;
+            this.pitch = 1;
+            this.volume = 1;
+          };
+          Object.defineProperty(window, 'speechSynthesis', {
+            configurable: true,
+            value: {
+              getVoices: () => [{ lang: 'zh-CN', name: 'Xiaoxiao', localService: true }],
+              speak: (utterance) => window.__spokenPrompts.push({
+                text: utterance.text,
+                lang: utterance.lang,
+                voiceName: utterance.voice && utterance.voice.name,
+                rate: utterance.rate,
+                pitch: utterance.pitch,
+              }),
+              cancel: () => {},
+              addEventListener: () => {},
+              removeEventListener: () => {},
+            },
+          });
+        })();
+        """,
+    )
+    page.goto(VOICE_TEST_URL)
+    page.wait_for_load_state("networkidle")
+    page.evaluate(
+        """() => {
+        localStorage.clear()
+        localStorage.setItem('kids-thinking-play-sound-enabled', 'true')
+        }""",
+    )
+    page.reload()
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("button", name="开始 3-4 岁 练习").click()
+    expect(page.locator(".question-area h2")).to_be_visible()
+    page.wait_for_timeout(700)
+    visible_prompt = page.locator(".question-area h2").inner_text()
+    spoken_prompts = page.evaluate("window.__spokenPrompts")
+    assert spoken_prompts, "Question prompt should be sent to speech synthesis"
+    assert spoken_prompts[-1]["text"] == visible_prompt, "Speech text should match the visible question"
+    assert spoken_prompts[-1]["lang"] == "zh-CN", "Speech should use Mandarin Chinese"
+    assert spoken_prompts[-1]["voiceName"] == "Xiaoxiao", "Speech should prefer an available Mandarin voice"
+    assert 0.8 <= spoken_prompts[-1]["rate"] <= 0.9, "Speech rate should be child-friendly"
+
+
 def run() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
+
+        voice = browser.new_page(viewport={"width": 390, "height": 844})
+        assert_question_voice_prompt(voice)
+        voice.close()
 
         desktop = browser.new_page(viewport={"width": 1024, "height": 768})
         desktop.goto(BASE_URL)

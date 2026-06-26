@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   BarChart3,
-  Brain,
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
@@ -19,6 +18,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -35,6 +35,7 @@ import {
   pickSessionQuestions,
   sessionQuestionCount,
 } from './data/questionBank'
+import brandLogoArt from './assets/brand/thinking-island-logo.webp'
 import thinkingPathArt from './assets/illustrations/thinking-path.webp'
 import type {
   ActivityStore,
@@ -153,6 +154,21 @@ const retryPuffs = [
   { x: -118, y: 104, size: 32, delay: 140 },
   { x: 132, y: 92, size: 42, delay: 210 },
   { x: 0, y: -128, size: 24, delay: 280 },
+] as const
+const mandarinVoiceNameHints = [
+  'Tingting',
+  'Xiaoxiao',
+  'Xiaoyi',
+  'Yunxi',
+  'Meijia',
+  'Sinji',
+  'HanHan',
+  'Yaoyao',
+  'Kangkang',
+  '普通话',
+  '中文',
+  'Chinese',
+  'Mandarin',
 ] as const
 
 const sampleImport = JSON.stringify(
@@ -337,6 +353,35 @@ function playFeedbackSound(correct: boolean) {
 
 function playAnswerFeedback(correct: boolean) {
   playFeedbackSound(correct)
+}
+
+function canUseSpeechSynthesis() {
+  return (
+    typeof window !== 'undefined' &&
+    'speechSynthesis' in window &&
+    typeof SpeechSynthesisUtterance !== 'undefined'
+  )
+}
+
+function isMandarinVoice(voice: SpeechSynthesisVoice) {
+  return (
+    voice.lang.toLowerCase().startsWith('zh') ||
+    /cmn|mandarin|chinese|普通话|中文|tingting|xiaoxiao|xiaoyi|yunxi|meijia|sinji/i.test(
+      `${voice.lang} ${voice.name}`,
+    )
+  )
+}
+
+function pickMandarinVoice(voices: SpeechSynthesisVoice[]) {
+  const mandarinVoices = voices.filter(isMandarinVoice)
+  return (
+    mandarinVoices.find((voice) =>
+      mandarinVoiceNameHints.some((hint) => voice.name.toLowerCase().includes(hint.toLowerCase())),
+    ) ??
+    mandarinVoices.find((voice) => voice.localService) ??
+    mandarinVoices[0] ??
+    null
+  )
 }
 
 function normalizeVisual(input: unknown): VisualToken | null {
@@ -531,6 +576,8 @@ function App() {
   const activeGestureRef = useRef<ActiveOptionGesture | null>(null)
   const gesturePointerIdRef = useRef<number | null>(null)
   const suppressOptionClickRef = useRef(false)
+  const questionSpeechTimerRef = useRef<number | null>(null)
+  const speechVoicesRef = useRef<SpeechSynthesisVoice[]>([])
 
   const questionPool = useMemo(() => [...generatedQuestions, ...importedQuestions], [importedQuestions])
   const currentTrack = ageTracks.find((track) => track.key === selectedAge) ?? null
@@ -570,11 +617,85 @@ function App() {
     window.localStorage.setItem(themeStorageKey, JSON.stringify(themeMode))
   }, [themeMode])
 
+  useEffect(() => {
+    if (!canUseSpeechSynthesis()) return undefined
+
+    const refreshVoices = () => {
+      speechVoicesRef.current = window.speechSynthesis.getVoices()
+    }
+
+    refreshVoices()
+    window.speechSynthesis.addEventListener('voiceschanged', refreshVoices)
+
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', refreshVoices)
+      window.speechSynthesis.cancel()
+    }
+  }, [])
+
+  const stopQuestionSpeech = useCallback(() => {
+    if (questionSpeechTimerRef.current !== null) {
+      window.clearTimeout(questionSpeechTimerRef.current)
+      questionSpeechTimerRef.current = null
+    }
+    if (canUseSpeechSynthesis()) {
+      window.speechSynthesis.cancel()
+    }
+  }, [])
+
+  const speakQuestionPrompt = useCallback(
+    (question: Question | null) => {
+      if (!question || !soundEnabled || !shouldPlayFeedbackAudio || !canUseSpeechSynthesis()) return
+
+      try {
+        stopQuestionSpeech()
+        const voices = speechVoicesRef.current.length
+          ? speechVoicesRef.current
+          : window.speechSynthesis.getVoices()
+        speechVoicesRef.current = voices
+
+        const utterance = new SpeechSynthesisUtterance(question.prompt)
+        const mandarinVoice = pickMandarinVoice(voices)
+        utterance.lang = mandarinVoice?.lang ?? 'zh-CN'
+        utterance.voice = mandarinVoice
+        utterance.rate = 0.86
+        utterance.pitch = 1.08
+        utterance.volume = 0.95
+        window.speechSynthesis.speak(utterance)
+      } catch {
+        // Some embedded browsers expose speech APIs but block playback.
+      }
+    },
+    [soundEnabled, stopQuestionSpeech],
+  )
+
+  useEffect(() => {
+    if (!selectedAge || finished || pickedOption || !currentQuestion || !soundEnabled || !shouldPlayFeedbackAudio) {
+      stopQuestionSpeech()
+      return undefined
+    }
+
+    questionSpeechTimerRef.current = window.setTimeout(() => {
+      speakQuestionPrompt(currentQuestion)
+    }, 360)
+
+    return () => stopQuestionSpeech()
+  }, [
+    currentQuestion,
+    finished,
+    pickedOption,
+    selectedAge,
+    soundEnabled,
+    speakQuestionPrompt,
+    stopQuestionSpeech,
+  ])
+
   function toggleTheme() {
     setThemeMode((mode) => (mode === 'day' ? 'night' : 'day'))
   }
 
   function startTrack(age: AgeKey) {
+    stopQuestionSpeech()
     setScreen('home')
     setSelectedAge(age)
     setQuestionIndex(0)
@@ -588,6 +709,7 @@ function App() {
   }
 
   function goHome() {
+    stopQuestionSpeech()
     setScreen('home')
     setSelectedAge(null)
     setQuestionIndex(0)
@@ -602,7 +724,8 @@ function App() {
   function toggleSound() {
     setSoundEnabled((enabled) => {
       const nextEnabled = !enabled
-      if (nextEnabled && shouldPlayFeedbackAudio) {
+      if (!nextEnabled) stopQuestionSpeech()
+      if (nextEnabled && shouldPlayFeedbackAudio && !currentQuestion) {
         window.setTimeout(() => playFeedbackSound(true), 0)
       }
       return nextEnabled
@@ -625,6 +748,7 @@ function App() {
       .filter((question): question is Question => Boolean(question))
     if (!questions.length) return
 
+    stopQuestionSpeech()
     setScreen('home')
     setSelectedAge(questions[0].age)
     setQuestionIndex(0)
@@ -661,6 +785,7 @@ function App() {
   function chooseOption(optionId: string) {
     if (!currentQuestion || pickedOption) return
     const correct = optionId === currentQuestion.answerId
+    stopQuestionSpeech()
     setPickedOption(optionId)
     if (soundEnabled && shouldPlayFeedbackAudio) playAnswerFeedback(correct)
     recordAttempt(currentQuestion, optionId, correct)
@@ -796,11 +921,13 @@ function App() {
   }
 
   function showParentMode() {
+    stopQuestionSpeech()
     setSelectedAge(null)
     setScreen('parent')
   }
 
   function showAdminMode() {
+    stopQuestionSpeech()
     setSelectedAge(null)
     setScreen('admin')
   }
@@ -891,7 +1018,7 @@ function App() {
         <header className="topbar">
           <div className="brand-lockup">
             <span className="brand-mark" aria-hidden="true">
-              <Brain size={26} strokeWidth={2.4} />
+              <img className="brand-mark-art" src={brandLogoArt} alt="" />
             </span>
             <div>
               <h1>小小思维岛</h1>
