@@ -78,6 +78,23 @@ const importedStorageKey = 'kids-thinking-play-imported-questions'
 const soundStorageKey = 'kids-thinking-play-sound-enabled'
 const themeStorageKey = 'kids-thinking-play-theme-mode'
 const validAges: AgeKey[] = ['age2', 'age3', 'age4']
+const ageCardVisuals: Record<AgeKey, VisualToken[]> = {
+  age2: [
+    { shape: 'circle', tone: 'coral', item: 'apple', small: true },
+    { shape: 'pill', tone: 'sun', item: 'banana', small: true },
+    { shape: 'square', tone: 'sky', item: 'blocks', small: true },
+  ],
+  age3: [
+    { shape: 'circle', tone: 'leaf', item: 'pear', small: true },
+    { shape: 'square', tone: 'sky', item: 'shirt', small: true },
+    { shape: 'diamond', tone: 'sun', item: 'bell', small: true },
+  ],
+  age4: [
+    { shape: 'square', tone: 'leaf', item: 'cup', small: true },
+    { shape: 'pill', tone: 'grape', item: 'hat', small: true },
+    { shape: 'triangle', tone: 'sun', item: 'plane', small: true },
+  ],
+}
 const validTemplates: TemplateKind[] = ['choice', 'drag', 'connect', 'shadow', 'maze', 'leftRight']
 const validShapes: ShapeName[] = ['circle', 'square', 'triangle', 'diamond', 'star', 'pill']
 const validTones: Tone[] = ['coral', 'leaf', 'sky', 'sun', 'grape', 'ink']
@@ -1094,7 +1111,6 @@ function App() {
               <div className="age-grid">
                 {ageTracks.map((track) => {
                   const stored = progress[track.key]
-                  const count = getQuestionCountByAge(questionPool, track.key)
                   return (
                     <button
                       className={`age-card tone-border-${track.accent}`}
@@ -1106,10 +1122,11 @@ function App() {
                       <span className="age-big">{track.short}</span>
                       <span className="age-label">{track.label}</span>
                       <span className="age-focus">{track.focus}</span>
+                      <span className="age-toys" aria-hidden="true">
+                        <VisualRow tokens={ageCardVisuals[track.key]} />
+                      </span>
                       <span className="age-meta">
-                        {stored ? `已玩 ${stored.plays} 次 · 最好 ${stored.best}/${stored.lastTotal}` : '未开始'}
-                        <br />
-                        题库 {count} 道 · 今日 {sessionQuestionCount} 题
+                        {stored ? `玩过 ${stored.plays} 次` : '新冒险'} · 今日 {sessionQuestionCount} 个小游戏
                       </span>
                       <ChevronRight size={24} aria-hidden="true" />
                     </button>

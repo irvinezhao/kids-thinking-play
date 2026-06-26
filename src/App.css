@@ -645,9 +645,37 @@
   line-height: 1.45;
 }
 
+.age-toys {
+  width: 100%;
+  margin-top: 14px;
+  padding-right: 58px;
+  display: block;
+}
+
+.age-toys .visual-row {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.age-toys .object-tile {
+  width: 34px;
+  height: 34px;
+  border-color: rgba(255, 250, 240, 0.78);
+  box-shadow:
+    0 4px 0 var(--ink-soft),
+    inset 0 -5px 0 rgba(0, 0, 0, 0.055);
+}
+
+.age-toys .object-figure {
+  width: 25px;
+  height: 25px;
+  filter: drop-shadow(0 2px 0 rgba(51, 40, 32, 0.16));
+}
+
 .age-meta {
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 12px;
   padding-right: 40px;
   font-size: 14px;
   font-weight: 850;
@@ -4162,11 +4190,11 @@
   }
 
   .age-card {
-    min-height: 86px;
-    padding: 11px 82px 11px 14px;
+    min-height: 90px;
+    padding: 10px 82px 10px 14px;
     display: grid;
     grid-template-columns: 58px minmax(0, 1fr);
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     align-content: center;
     align-items: center;
     column-gap: 12px;
@@ -4202,12 +4230,41 @@
   }
 
   .age-big {
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
   }
 
   .age-label,
-  .age-focus {
+  .age-focus,
+  .age-toys {
     grid-column: 2;
+  }
+
+  .age-toys {
+    margin-top: 5px;
+    padding-right: 0;
+  }
+
+  .age-toys .visual-row {
+    gap: 5px;
+  }
+
+  .age-toys .object-tile {
+    width: 26px;
+    height: 26px;
+    border-width: 1px;
+  }
+
+  .age-toys .object-tile::before {
+    inset: 4px;
+  }
+
+  .age-toys .object-tile::after {
+    display: none;
+  }
+
+  .age-toys .object-figure {
+    width: 20px;
+    height: 20px;
   }
 
   .mini-badges span {
@@ -4560,6 +4617,20 @@
   .theme-toggle::after {
     width: 5px;
     height: 5px;
+  }
+
+  .home-hero {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .mini-badges {
+    display: none;
+  }
+
+  .home-mascot {
+    height: 96px;
+    margin-top: 2px;
   }
 
   .quiz-screen .quiz-topbar {

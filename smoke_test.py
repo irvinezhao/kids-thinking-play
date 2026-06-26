@@ -52,7 +52,7 @@ def run() -> None:
         desktop.wait_for_load_state("networkidle")
 
         expect(desktop.get_by_role("heading", name="小小思维岛")).to_be_visible()
-        expect(desktop.get_by_text("题库 150 道 · 今日 10 题")).to_have_count(3)
+        expect(desktop.locator(".age-toys")).to_have_count(3)
         desktop.get_by_role("button", name="切换到黑夜模式").click()
         expect(desktop.locator('html[data-theme="night"]')).to_have_count(1)
         desktop.get_by_role("button", name="切换到白天模式").click()
