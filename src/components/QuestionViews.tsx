@@ -71,6 +71,39 @@ export function VisualRow({ tokens, stacked = false }: { tokens: VisualToken[]; 
   )
 }
 
+const pictureHintSkills = ['分类', '生活常识', '组合分类']
+const pictureHintLabelDenyList = new Set(['?', '+', '→', '多', '少'])
+
+function getPictureHint(question: Question) {
+  if (!pictureHintSkills.some((skill) => question.skill.includes(skill))) return null
+
+  const label = question.scene.find(
+    (token) =>
+      token.label &&
+      !token.item &&
+      token.shape === 'pill' &&
+      token.tone !== 'ink' &&
+      !pictureHintLabelDenyList.has(token.label),
+  )
+  const items = question.scene.filter((token) => token.item)
+
+  if (!label || items.length === 0) return null
+  return { label, items }
+}
+
+function PictureHintStage({ hint }: { hint: { label: VisualToken; items: VisualToken[] } }) {
+  return (
+    <div className={`picture-hint tone-frame-${hint.label.tone}`}>
+      <div className="picture-hint-label">
+        <span>{hint.label.label}</span>
+      </div>
+      <div className="picture-hint-shelf">
+        <VisualRow tokens={hint.items} />
+      </div>
+    </div>
+  )
+}
+
 function DragStage({
   question,
   disabled,
@@ -352,6 +385,9 @@ export function QuestionStage({
   if (question.template === 'leftRight') {
     return <LeftRightStage question={question} />
   }
+
+  const pictureHint = getPictureHint(question)
+  if (pictureHint) return <PictureHintStage hint={pictureHint} />
 
   return <VisualRow tokens={question.scene} stacked={question.id.includes('top-item')} />
 }

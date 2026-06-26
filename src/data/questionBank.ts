@@ -484,7 +484,11 @@ function categoryQuestion(age: AgeKey, seed: number): Question {
   const inside = set.inside
   const outside = set.outside
   const insideOffset = seed % inside.length
-  const examples = [inside[insideOffset], inside[(insideOffset + 1) % inside.length]]
+  const examples = [
+    inside[insideOffset],
+    inside[(insideOffset + 1) % inside.length],
+    inside[(insideOffset + 2) % inside.length],
+  ]
   const result = withAnswer(
     [
       option('wrong-1', [itemVisual(examples[0].item)], examples[0].text),
@@ -504,6 +508,7 @@ function categoryQuestion(age: AgeKey, seed: number): Question {
       visual('pill', 'leaf', false, set.label),
       itemVisual(examples[0].item, true),
       itemVisual(examples[1].item, true),
+      itemVisual(examples[2].item, true),
     ],
     answerId: result.answerId,
     options: result.options,
@@ -798,7 +803,7 @@ function curatedAge2Questions(): Question[] {
       template: 'choice',
       skill: '生活常识',
       prompt: '哪一个可以穿在脚上？',
-      scene: [visual('pill', 'leaf', false, '脚')],
+      scene: [visual('pill', 'leaf', false, '脚'), itemVisual('shoe', true), itemVisual('sock', true)],
       answerId: shoe.answerId,
       options: shoe.options,
       success: '鞋子可以穿在脚上。',
@@ -851,7 +856,7 @@ function curatedAge2Questions(): Question[] {
       template: 'choice',
       skill: '找形状',
       prompt: '哪一个是圆圆的点心？',
-      scene: [visual('circle', 'coral', false, '圆')],
+      scene: [visual('circle', 'coral', false, '圆'), itemVisual('cookie', true)],
       answerId: roundSnack.answerId,
       options: roundSnack.options,
       success: '饼干是圆圆的点心。',
@@ -954,7 +959,7 @@ function curatedAge3Questions(): Question[] {
       template: 'choice',
       skill: '生活常识',
       prompt: '哪一个可以穿在身上？',
-      scene: [visual('pill', 'sky', false, '穿')],
+      scene: [visual('pill', 'sky', false, '穿'), itemVisual('shirt', true), itemVisual('hat', true)],
       answerId: bodyWear.answerId,
       options: bodyWear.options,
       success: '上衣可以穿在身上。',
@@ -1137,7 +1142,7 @@ function curatedAge4Questions(): Question[] {
       template: 'choice',
       skill: '组合分类',
       prompt: '哪一组都能吃？',
-      scene: [visual('pill', 'leaf', false, '都能吃')],
+      scene: [visual('pill', 'leaf', false, '都能吃'), itemVisual('apple', true), itemVisual('cookie', true)],
       answerId: edibleGroup.answerId,
       options: edibleGroup.options,
       success: '苹果和饼干都能吃。',
