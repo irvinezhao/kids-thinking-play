@@ -1,4 +1,12 @@
 @font-face {
+  font-family: 'ZhanKuKuaiLeTi';
+  src: url('./assets/fonts/ZhanKuKuaiLeTi.woff2') format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
   font-family: 'JinNianYeYaoJiaYouYa';
   src: url('./assets/fonts/JinNianYeYaoJiaYouYa.woff2') format('woff2');
   font-display: swap;
@@ -23,7 +31,7 @@
 }
 
 :root {
-  --app-font-family: 'JinNianYeYaoJiaYouYa';
+  --app-font-family: 'ZhanKuKuaiLeTi';
   --surface: #fff6e8;
   --surface-strong: #fffdf7;
   --paper: #fffaf0;
@@ -61,6 +69,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-font='zhanku'] {
+  --app-font-family: 'ZhanKuKuaiLeTi';
 }
 
 :root[data-font='jinnian'] {

@@ -28,6 +28,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import { App as CapacitorApp } from '@capacitor/app'
 import { OptionContent, QuestionStage, VisualRow } from './components/QuestionViews'
 import {
   ageTracks,
@@ -60,7 +61,7 @@ import './App.css'
 
 type ScreenMode = 'home' | 'parent' | 'admin'
 type ThemeMode = 'day' | 'night'
-type AppFontId = 'jinnian' | 'pingfang' | 'qingsong'
+type AppFontId = 'zhanku' | 'jinnian' | 'pingfang' | 'qingsong'
 type SessionAnswer = {
   questionId: string
   optionId: string
@@ -107,12 +108,13 @@ const appFontStorageKey = 'kids-thinking-play-app-font'
 const recentQuestionLimit = 80
 const validAges: AgeKey[] = ['age2', 'age3', 'age4']
 const validPromptVoices: PromptVoiceId[] = ['lovely_girl', 'cute_boy']
-const validAppFonts: AppFontId[] = ['jinnian', 'pingfang', 'qingsong']
+const validAppFonts: AppFontId[] = ['zhanku', 'jinnian', 'pingfang', 'qingsong']
 const promptVoiceProfiles: Record<PromptVoiceId, { label: string; short: string }> = {
   lovely_girl: { label: '萌萌女童', short: '女' },
   cute_boy: { label: '可爱男童', short: '男' },
 }
 const appFontProfiles: Record<AppFontId, { label: string; short: string }> = {
+  zhanku: { label: '站酷快乐体', short: '乐' },
   jinnian: { label: '今年加油体', short: '加' },
   pingfang: { label: '平方手书体', short: '手' },
   qingsong: { label: '轻松手写体', short: '轻' },
@@ -283,7 +285,7 @@ function readPromptVoice(): PromptVoiceId {
 
 function readAppFont(): AppFontId {
   const stored = readJson<AppFontId | null>(appFontStorageKey, null)
-  return stored && validAppFonts.includes(stored) ? stored : 'jinnian'
+  return stored && validAppFonts.includes(stored) ? stored : 'zhanku'
 }
 
 function localDateKey(value: string | Date) {
@@ -701,6 +703,7 @@ function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(readThemeMode)
   const [promptVoice, setPromptVoice] = useState<PromptVoiceId>(readPromptVoice)
   const [appFont, setAppFont] = useState<AppFontId>(readAppFont)
+  const [showExitHint, setShowExitHint] = useState(false)
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[] | null>(null)
   const [sessionWrongQuestionIds, setSessionWrongQuestionIds] = useState<string[]>([])
   const [sessionAvoidQuestionIds, setSessionAvoidQuestionIds] = useState<string[]>([])
@@ -716,6 +719,8 @@ function App() {
   const promptVoiceManifestRef = useRef<PromptVoiceManifest | null>(null)
   const promptVoiceManifestBaseRef = useRef('')
   const speechVoicesRef = useRef<SpeechSynthesisVoice[]>([])
+  const nativeExitUntilRef = useRef(0)
+  const nativeExitHintTimerRef = useRef<number | null>(null)
 
   const questionPool = useMemo(() => [...generatedQuestions, ...importedQuestions], [importedQuestions])
   const currentTrack = ageTracks.find((track) => track.key === selectedAge) ?? null
@@ -971,6 +976,8 @@ function App() {
   function startTrack(age: AgeKey) {
     stopQuestionSpeech()
     stopFeedbackSpeech()
+    nativeExitUntilRef.current = 0
+    setShowExitHint(false)
     setScreen('home')
     setSelectedAge(age)
     setQuestionIndex(0)
@@ -984,9 +991,11 @@ function App() {
     sessionStartedAtRef.current = Date.now()
   }
 
-  function goHome() {
+  const goHome = useCallback(() => {
     stopQuestionSpeech()
     stopFeedbackSpeech()
+    nativeExitUntilRef.current = 0
+    setShowExitHint(false)
     setScreen('home')
     setSelectedAge(null)
     setQuestionIndex(0)
@@ -997,7 +1006,52 @@ function App() {
     setSessionAvoidQuestionIds([])
     finishRecordedRef.current = false
     sessionStartedAtRef.current = null
-  }
+  }, [stopFeedbackSpeech, stopQuestionSpeech])
+
+  useEffect(() => {
+    let listenerRemoved = false
+    let removeBackListener: (() => void) | undefined
+
+    void CapacitorApp.addListener('backButton', () => {
+      if (selectedAge || screen !== 'home') {
+        goHome()
+        return
+      }
+
+      const now = Date.now()
+      if (now < nativeExitUntilRef.current) {
+        void CapacitorApp.exitApp()
+        return
+      }
+
+      nativeExitUntilRef.current = now + 1800
+      setShowExitHint(true)
+      if (nativeExitHintTimerRef.current !== null) {
+        window.clearTimeout(nativeExitHintTimerRef.current)
+      }
+      nativeExitHintTimerRef.current = window.setTimeout(() => {
+        setShowExitHint(false)
+        nativeExitHintTimerRef.current = null
+      }, 1800)
+    }).then((handle) => {
+      if (listenerRemoved) {
+        void handle.remove()
+        return
+      }
+      removeBackListener = () => {
+        void handle.remove()
+      }
+    })
+
+    return () => {
+      listenerRemoved = true
+      removeBackListener?.()
+      if (nativeExitHintTimerRef.current !== null) {
+        window.clearTimeout(nativeExitHintTimerRef.current)
+        nativeExitHintTimerRef.current = null
+      }
+    }
+  }, [goHome, screen, selectedAge])
 
   function toggleSound() {
     setSoundEnabled((enabled) => {
@@ -1206,12 +1260,16 @@ function App() {
 
   function showParentMode() {
     stopQuestionSpeech()
+    nativeExitUntilRef.current = 0
+    setShowExitHint(false)
     setSelectedAge(null)
     setScreen('parent')
   }
 
   function showAdminMode() {
     stopQuestionSpeech()
+    nativeExitUntilRef.current = 0
+    setShowExitHint(false)
     setSelectedAge(null)
     setScreen('admin')
   }
@@ -1299,6 +1357,11 @@ function App() {
           <span />
           <span />
         </div>
+        {showExitHint && (
+          <div className="native-exit-hint" role="status" aria-live="polite">
+            再按一次退出
+          </div>
+        )}
         <header className="topbar">
           <div className="brand-lockup">
             <span className="brand-mark" aria-hidden="true">

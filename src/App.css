@@ -60,6 +60,29 @@
   opacity: 0.45;
 }
 
+.native-exit-hint {
+  position: fixed;
+  left: 50%;
+  bottom: max(22px, calc(env(safe-area-inset-bottom) + 16px));
+  z-index: 20;
+  min-width: 150px;
+  padding: 11px 18px 10px;
+  border: 2px solid var(--story-line);
+  border-radius: 999px;
+  color: var(--text-strong);
+  background: var(--paper);
+  box-shadow: 0 7px 0 var(--ink-soft), var(--soft-shadow);
+  font-size: 16px;
+  font-weight: 950;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: nativeExitHint 190ms ease-out both;
+}
+
+:root[data-theme='night'] .native-exit-hint {
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.25), var(--soft-shadow);
+}
+
 .play-stickers span:nth-child(1) {
   top: 130px;
   left: 5vw;
@@ -257,6 +280,10 @@
   font-size: 13px;
   font-style: normal;
   line-height: 1;
+}
+
+.font-toggle-button.is-zhanku {
+  background: var(--peach);
 }
 
 .font-toggle-button.is-jinnian {
@@ -4082,6 +4109,18 @@
   }
 }
 
+@keyframes nativeExitHint {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
 @keyframes feedbackWiggle {
   0%,
   100% {
@@ -4261,7 +4300,8 @@
   .gesture-thread line,
   .gesture-ghost,
   .maze-cell.is-traced,
-  .maze-board.is-miss {
+  .maze-board.is-miss,
+  .native-exit-hint {
     animation: none;
   }
 }

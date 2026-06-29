@@ -42,7 +42,7 @@
 - 题干旁提供“再读题目”按钮，孩子没听清时可以重复播放。
 - 答题反馈显示在页面中间，正确和错误状态都有清晰动效。
 - 结果页提供“玩更多”入口，重新开局时会读取本地近期题目记录并优先去重。
-- 支持白天/黑夜模式、静音开关、两种题干音色和三套手写风格字体。
+- 支持白天/黑夜模式、静音开关、两种题干音色和四套手写风格字体。
 
 ### 题库内容
 
@@ -87,7 +87,7 @@
 - TypeScript
 - Lucide React
 - 本地人声音频 / 云端 TTS manifest
-- JinNianYeYaoJiaYouYa / PingFangShouShuTi / QingSongShouXieTi2 三套可切换子集字体
+- ZhanKuKuaiLeTi / JinNianYeYaoJiaYouYa / PingFangShouShuTi / QingSongShouXieTi2 四套可切换子集字体，默认使用 ZhanKuKuaiLeTi
 - Playwright smoke test
 - GitHub Pages
 
